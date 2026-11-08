@@ -1215,9 +1215,18 @@ impl LedgerState {
     }
 
     /// Ripristino byte-identico dello stato dopo un errore di applicazione:
-    /// conti nell'ordine inverso dello snapshot, totale contabile ripristinato.
-    fn rollback(&mut self, undo: Vec<(Address, Option<Account>)>, old_total: u128) {
+    /// conti nell'ordine inverso dello snapshot, totale contabile, pool
+    /// cashback e pool airdrop ripristinati.
+    fn rollback(
+        &mut self,
+        undo: Vec<(Address, Option<Account>)>,
+        old_total: u128,
+        old_cashback: u64,
+        old_airdrop: u64,
+    ) {
         self.accounts_total = old_total;
+        self.cashback_pool = old_cashback;
+        self.airdrop_pool = old_airdrop;
         for (addr, old) in undo.into_iter().rev() {
             match old {
                 Some(acct) => {
@@ -1326,6 +1335,8 @@ impl LedgerState {
 
         let mut undo: Vec<(Address, Option<Account>)> = Vec::new();
         let old_total = self.accounts_total;
+        let old_cashback = self.cashback_pool;
+        let old_airdrop = self.airdrop_pool;
 
         let mut apply = |state: &mut LedgerState| -> Result<(), LedgerError> {
             for tx in &h.txs {
@@ -1493,7 +1504,7 @@ impl LedgerState {
         };
 
         if let Err(e) = apply(self) {
-            self.rollback(undo, old_total);
+            self.rollback(undo, old_total, old_cashback, old_airdrop);
             return Err(e);
         }
 
@@ -1504,7 +1515,7 @@ impl LedgerState {
             .and_then(|t| t.checked_add(self.airdrop_pool as u128))
             .ok_or(LedgerError::Overflow)?;
         if total != supply {
-            self.rollback(undo, old_total);
+            self.rollback(undo, old_total, old_cashback, old_airdrop);
             return Err(LedgerError::SupplyInvariantBroken);
         }
 
@@ -2060,6 +2071,10 @@ mod tests {
         let ext = std::env::temp_dir().join(format!("amg1-{}-{}-ext", name, std::process::id()));
         let _ = fs::remove_dir_all(&data);
         let _ = fs::remove_dir_all(&ext);
+        // Le directory esistono da subito: i test dei wallet scrivono file
+        // in `data` senza aprire prima un Ledger.
+        fs::create_dir_all(&data).unwrap();
+        fs::create_dir_all(&ext).unwrap();
         Fixture {
             node: Wallet::from_seed(os_random::<SEED_SIZE>()),
             creator: Wallet::from_seed(os_random::<SEED_SIZE>()),
