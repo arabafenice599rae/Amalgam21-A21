@@ -1,6 +1,6 @@
 [package]
 name = "token-postquantum"
-version = "0.12.0"
+version = "0.13.0"
 edition = "2021"
 description = "Token digitale proprietario post-quantum: ML-DSA-65, SHAKE256-512, ledger autoritario a firmatario unico"
 publish = false
@@ -14,6 +14,7 @@ rand = "0.10"              # sola entropia OS (TryRngCore)
 chacha20poly1305 = "0.10"  # AEAD XChaCha20-Poly1305 (RustCrypto, auditato)
 argon2 = "0.5"             # KDF Argon2id (RustCrypto, PHC winner)
 zeroize = "1"              # azzeramento sicuro dei segreti in memoria
+libc = "0.2"                # mlock/munlock dei segreti (best-effort); standard de facto
 rpassword = "7"            # prompt passphrase senza eco (solo binario demo)
 
 [dev-dependencies]

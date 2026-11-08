@@ -1,5 +1,5 @@
 // ============================================================================
-// TOKEN DIGITALE PROPRIETARIO POST-QUANTUM — v0.12 (core/src/lib.rs)
+// TOKEN DIGITALE PROPRIETARIO POST-QUANTUM — v0.13 (core/src/lib.rs)
 // ----------------------------------------------------------------------------
 // Cargo.toml (core):
 //
@@ -38,6 +38,37 @@
 //   usano SHAKE256 con output a 512 bit: ~2^256 preimage, ~2^170 collision.
 //   Le firme restano ML-DSA-65 (NIST livello 3). "Post-quantum" indica primitive
 //   senza riduzioni note via Shor/Grover, NON sicurezza assoluta.
+//
+// CHANGELOG v0.13 (durata, indipendenza, igiene dei segreti — NESSUN formato
+// binario esistente cambia; un solo file NUOVO: ledger.ckpt):
+//   1. CHECKPOINT FIRMATO: snapshot borsh dello stato contabile (conti,
+//      storia dei blocchi, pool) firmato ML-DSA-65 dal nodo su byte
+//      canonici con dominio dedicato (com.amalgam21.ckpt.v2). Verifica
+//      contro la node_vk del genesis: modello di fiducia identico al
+//      record di genesis. Scrittura atomica (tmp + fsync + rename).
+//   2. ROTAZIONE DEL LOG: enable_checkpoints(n) attiva il checkpoint +
+//      archiviazione del segmento ogni n blocchi (ledger.log.<height>).
+//      Ordine crash-safe: checkpoint atomico -> chiusura handle -> rename
+//      del segmento -> nuovo log con solo header. Il cap MAX_LOG_BYTES è
+//      ora PER SEGMENTO: la storia totale non è più limitata a 1 GiB.
+//   3. REPLAY PARZIALE: apertura con segmento ruotato = verifica del
+//      segmento (firme di ogni blocco + hash di catena con seme = tip del
+//      checkpoint) + replay dei soli blocchi successivi. Cross-check del
+//      checkpoint sui segmenti pieni (crash pre-rotazione). Rollback e
+//      manomissione rilevati contro journal/anchor in ALTEZZE ASSOLUTE.
+//   4. APERTURA STRICT open_independent: rifiuta il montaggio se journal e
+//      dati condividono lo stesso filesystem (st_dev): l'indipendenza
+//      dichiarata deve essere verificabile, non presunta. open() classico
+//      mantiene il comportamento v0.12 (journal su percorso qualunque).
+//   5. MLOCK DEI SEGRETI (unix, best-effort): seed e signing key sono
+//      spostati su HEAP BOXED (indirizzo stabile agli spostamenti) e le
+//      loro pagine sono bloccate in RAM con libc::mlock (standard de
+//      facto, rust-lang). Il Drop sblocca PRIMA dell'azzeramento zeroize.
+//      Errori ignorati di proposito: ambiente senza privilegio resta
+//      utilizzabile; zeroize resta la difesa primaria.
+//   6. RECOVERY POST-ROTAZIONE: log VUOTO + checkpoint = stato legittimo
+//      (prima: "log vuoto + journal non vuoto = incoerente" era l'unico
+//      caso). La monotonia journal >= checkpoint è verificata all'apertura.
 //
 // CHANGELOG v0.12 (performance e igiene, NESSUN formato binario cambia):
 //   1. STAGING IN PLACE CON UNDO LOG (modello "conti toccati", alla Solana):
@@ -124,9 +155,11 @@
 // LIMITAZIONI DICHIARATE:
 //   - Il codice NON è stato compilato in questo ambiente: serve `cargo check`
 //     e `cargo test` su una toolchain reale, poi fuzzing dei parser.
-//   - Il journal "esterno" su filesystem locale NON fornisce indipendenza
-//     reale: chi controlla il filesystem può riscriverlo. L'indipendenza è
-//     una proprietà dell'endpoint, non del codice.
+//   - Il journal "esterno" fornisce indipendenza SOLO se risiede su un
+//     filesystem/endpoint DIVERSO dai dati (v0.13: open_independent lo
+//     impone verificando st_dev; open() classico NON lo impone). Chi
+//     controlla l'intero host può sempre riscrivere tutto: l'indipendenza
+//     resta una proprietà dell'endpoint di pubblicazione.
 //   - Claim e re-claim NON pagano fee: nel modello a propositore unico il
 //     costo è zero e non esiste protezione anti-spam; in un modello
 //     multipartito sarebbe un vettore di spam da rivalutare.
@@ -137,10 +170,11 @@
 //   - La facciata ERC-20-like è parità SEMANTICA di lettura, NON
 //     compatibilità di protocollo EVM. L'interoperabilità reale richiede un
 //     bridge esterno: componente separato, non implementato.
-//   - Checkpoint/rotazione log non implementati (v0.13): il cap di vita
-//     resta MAX_LOG_BYTES (1 GiB, ~300K transfer o ~199K claim totali).
-//   - mlock/non-swappable della chiave in RAM: non implementato in codice;
-//     gestito a livello di deployment (swap cifrato/disattivato, LimitMEMLOCK).
+//   - mlock dei segreti (v0.13) è BEST-EFFORT: senza privilegi o con
+//     RLIMIT_MEMLOCK basso le pagine NON vengono bloccate e restano
+//     eleggibili allo swap; zeroize resta la difesa primaria. Il cap
+//     MAX_CKPT_BYTES limita il checkpoint; il cap MAX_LOG_BYTES ora è PER
+//     SEGMENTO (la rotazione rimuove il limite alla storia totale).
 // ============================================================================
 // ---------------------------------------------------------------------------
 // STRUTTURA DEL CRATE (modularizzazione v0.13-M1, nessun formato binario
@@ -150,6 +184,7 @@
 //   types.rs   = tipi serializzati (genesis, tx, blocchi, record del log)
 //   wallet.rs  = wallet, firme ML-DSA-65, indirizzi, cifratura del wallet
 //   anchor.rs  = anchor firmati, journal append-only esterno
+//   checkpoint.rs = checkpoint firmato (v0.13): snapshot verificabile
 //   error.rs   = errori del ledger
 //   state.rs   = stato contabile, undo log, facciata ERC-20-like
 //   ledger.rs  = persistenza: log, anchor, journal, apertura e submit
@@ -157,6 +192,7 @@
 // ---------------------------------------------------------------------------
 
 mod anchor;
+mod checkpoint;
 mod consts;
 mod error;
 mod ledger;
@@ -186,3 +222,6 @@ pub use wallet::{address_of, decode_address, encode_address, Wallet};
 pub(crate) use consts::*;
 pub(crate) use util::*;
 pub(crate) use wallet::*;
+
+// checkpoint: elemento liberi pub(crate) usati da ledger via `use crate::*`.
+pub(crate) use checkpoint::*;

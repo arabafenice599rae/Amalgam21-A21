@@ -14,8 +14,8 @@ use std::path::Path;
 use zeroize::Zeroizing;
 
 pub struct Wallet {
-    pub seed: Zeroizing<Seed>,
-    pub signing_key: Zeroizing<[u8; SK_SIZE]>,
+    pub seed: Zeroizing<Box<Seed>>,
+    pub signing_key: Zeroizing<Box<[u8; SK_SIZE]>>,
     pub verification_key: [u8; VK_SIZE],
     pub address: Address,
 }
@@ -24,12 +24,17 @@ impl Wallet {
     pub fn from_seed(seed: Seed) -> Self {
         let kp = ml_dsa_65::generate_key_pair(seed);
         let verification_key = *kp.verification_key.as_ref();
-        Wallet {
-            seed: Zeroizing::new(seed),
-            signing_key: Zeroizing::new(*kp.signing_key.as_ref()),
+        let w = Wallet {
+            seed: Zeroizing::new(Box::new(seed)),
+            signing_key: Zeroizing::new(Box::new(*kp.signing_key.as_ref())),
             address: address_of(&verification_key),
             verification_key,
-        }
+        };
+        // I segreti sono su HEAP BOXED: l'indirizzo è stabile agli spostamenti
+        // del Wallet, quindi il lock delle pagine è valido per tutta la vita
+        // dell'oggetto.
+        w.lock_secrets();
+        w
     }
 
     /// Utilità OPZIONALE per un singolo utente multi-conto; non è il modello
@@ -50,7 +55,7 @@ impl Wallet {
         // fine della firma e NON è azzerata (nessun Drop noto nel crate).
         // Con questa API la copia è inevitabile; il segreto longevo resta
         // in Zeroizing per l'intera vita del wallet. Vedi LIMITAZIONI.
-        let sk = ml_dsa_65::MLDSA65SigningKey::new(*self.signing_key);
+        let sk = ml_dsa_65::MLDSA65SigningKey::new(**self.signing_key);
         let sig = ml_dsa_65::sign(&sk, message, context, os_random::<32>())
             .expect("firma ML-DSA-65 con input validi");
         *sig.as_ref()
@@ -75,10 +80,7 @@ impl Wallet {
         let key = argon2_key(passphrase, &salt, ARGON2_M_KIB, ARGON2_T, ARGON2_P);
         let cipher = XChaCha20Poly1305::new(key.as_ref().into());
         let ct = cipher
-            .encrypt(
-                XNonce::from_slice(&nonce),
-                Payload::from(self.seed.as_ref()),
-            )
+            .encrypt(XNonce::from_slice(&nonce), Payload::from(&self.seed[..]))
             .map_err(|_| {
                 std::io::Error::new(std::io::ErrorKind::InvalidInput, "cifratura fallita")
             })?;
@@ -147,6 +149,44 @@ impl Wallet {
         let mut s = [0u8; SEED_SIZE];
         s.copy_from_slice(&seed);
         Ok(Wallet::from_seed(s))
+    }
+
+    /// Blocca in RAM le pagine dei segreti (best-effort, unix): impedisce lo
+    /// swap del seed e della signing key verso il disco. NON è una garanzia
+    /// assoluta (RLIMIT_MEMLOCK limitato, ibernazione, ptrace): zeroize
+    /// resta la difesa primaria al rilascio. Gli errori sono ignorati di
+    /// proposito: un ambiente senza privilegio non deve rendere il wallet
+    /// inutilizzabile.
+    fn lock_secrets(&self) {
+        self.set_locked(true);
+    }
+
+    fn unlock_secrets(&self) {
+        self.set_locked(false);
+    }
+
+    #[cfg(unix)]
+    fn set_locked(&self, lock: bool) {
+        use std::mem::size_of;
+        unsafe {
+            let lock_fn = if lock { libc::mlock } else { libc::munlock };
+            let seed_ptr = &**self.seed as *const Seed as *const libc::c_void;
+            let sk_ptr = &**self.signing_key as *const [u8; SK_SIZE] as *const libc::c_void;
+            let _ = lock_fn(seed_ptr, size_of::<Seed>());
+            let _ = lock_fn(sk_ptr, size_of::<[u8; SK_SIZE]>());
+        }
+    }
+
+    #[cfg(not(unix))]
+    fn set_locked(&self, _lock: bool) {}
+}
+
+impl Drop for Wallet {
+    /// Sblocca le pagine PRIMA del drop dei campi: il munlock deve precedere
+    /// l'azzeramento (zeroize) e la deallocazione dei Box, altrimenti si
+    /// bloccherebbe memoria già resa libera.
+    fn drop(&mut self) {
+        self.unlock_secrets();
     }
 }
 

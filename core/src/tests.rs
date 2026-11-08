@@ -765,3 +765,247 @@ fn apply_block_rollback_restores_state_byte_identical() {
     // Il blocco rifiutato non è nella storia.
     assert_eq!(l.state.blocks.len(), before.blocks.len());
 }
+
+// ---------------------------------------------------------------------------
+// v0.13: checkpoint firmato, rotazione dei segmenti, indipendenza del journal
+// ---------------------------------------------------------------------------
+
+#[test]
+fn checkpoint_rotation_and_reopen() {
+    let f = fixture("ckpt-rotate");
+    let alice = Wallet::from_seed(os_random::<SEED_SIZE>());
+    {
+        let mut l = Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator).unwrap();
+        let chain = l.state.genesis.genesis_hash;
+        l.enable_checkpoints(2);
+        // Blocco 1: sotto soglia, nessun checkpoint, nessuna rotazione.
+        l.submit(
+            &f.node,
+            vec![SignedTransaction::transfer(
+                &f.creator,
+                chain,
+                0,
+                alice.address,
+                1,
+            )],
+        )
+        .unwrap();
+        assert!(!f.data.join("ledger.ckpt").exists());
+        // Blocco 2: checkpoint firmato + archiviazione del segmento.
+        l.submit(
+            &f.node,
+            vec![SignedTransaction::transfer(
+                &f.creator,
+                chain,
+                1,
+                alice.address,
+                1,
+            )],
+        )
+        .unwrap();
+        assert!(f.data.join("ledger.ckpt").exists());
+        assert!(f.data.join("ledger.log.2").exists());
+        // Blocco 3: nel NUOVO segmento (senza genesis).
+        l.submit(
+            &f.node,
+            vec![SignedTransaction::transfer(
+                &f.creator,
+                chain,
+                2,
+                alice.address,
+                1,
+            )],
+        )
+        .unwrap();
+        assert_eq!(l.state.height, 3);
+        assert_eq!(l.state.balance(&alice.address), 3);
+        assert_eq!(l.state.nonce(&f.creator.address), 3);
+    }
+    // Riapertura: replay PARZIALE dal checkpoint (base a quota 2) + replay
+    // del solo blocco 3 del segmento ruotato.
+    let mut l = Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator).unwrap();
+    assert_eq!(l.state.height, 3);
+    assert_eq!(l.state.balance(&alice.address), 3);
+    assert_eq!(l.state.nonce(&f.creator.address), 3);
+    assert_eq!(l.state.accounts_total, l_recount(&l));
+    // Il ledger resta pienamente operativo dopo il recovery, e la politica
+    // di rotazione sopravvive come configurazione di runtime riapplicata.
+    let chain = l.state.genesis.genesis_hash;
+    l.enable_checkpoints(2);
+    l.submit(
+        &f.node,
+        vec![SignedTransaction::transfer(
+            &f.creator,
+            chain,
+            3,
+            alice.address,
+            1,
+        )],
+    )
+    .unwrap();
+    assert_eq!(l.state.height, 4);
+    // Quota 4: nuova rotazione; il segmento attivo è VUOTO.
+    drop(l);
+    let l = Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator).unwrap();
+    assert_eq!(l.state.height, 4);
+    assert_eq!(l.state.balance(&alice.address), 4);
+}
+
+/// Riconteggio completo della supply per il controllo incrociato dei test.
+fn l_recount(l: &Ledger) -> u128 {
+    let mut total: u128 = 0;
+    for a in l.state.accounts.values() {
+        total += a.balance as u128;
+    }
+    total
+}
+
+#[test]
+fn checkpoint_tampered_rejected() {
+    let f = fixture("ckpt-tamper");
+    let alice = Wallet::from_seed(os_random::<SEED_SIZE>());
+    {
+        let mut l = Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator).unwrap();
+        let chain = l.state.genesis.genesis_hash;
+        l.enable_checkpoints(2);
+        l.submit(
+            &f.node,
+            vec![SignedTransaction::transfer(
+                &f.creator,
+                chain,
+                0,
+                alice.address,
+                1,
+            )],
+        )
+        .unwrap();
+        l.submit(
+            &f.node,
+            vec![SignedTransaction::transfer(
+                &f.creator,
+                chain,
+                1,
+                alice.address,
+                1,
+            )],
+        )
+        .unwrap();
+        // Blocco 3 nel segmento ruotato: checkpoint attivo a quota 2.
+        l.submit(
+            &f.node,
+            vec![SignedTransaction::transfer(
+                &f.creator,
+                chain,
+                2,
+                alice.address,
+                1,
+            )],
+        )
+        .unwrap();
+    }
+    // Un byte del checkpoint alterato: la firma ML-DSA-65 non deve più
+    // verificarsi (o il corpo non deve deserializzarsi): apertura bloccata.
+    let ckpt = f.data.join("ledger.ckpt");
+    let mut raw = fs::read(&ckpt).unwrap();
+    let mid = raw.len() / 2;
+    raw[mid] ^= 0xFF;
+    fs::write(&ckpt, &raw).unwrap();
+    match Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator) {
+        Err(LedgerError::InvalidSignature) | Err(LedgerError::TamperDetected { .. }) => {}
+        other => panic!(
+            "attesa InvalidSignature o TamperDetected, ottenuto {:?}",
+            other.map(|_| ())
+        ),
+    }
+}
+
+#[test]
+fn rollback_stale_log_blocked() {
+    let f = fixture("ckpt-stale");
+    let alice = Wallet::from_seed(os_random::<SEED_SIZE>());
+    {
+        let mut l = Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator).unwrap();
+        let chain = l.state.genesis.genesis_hash;
+        // Blocco 1 e backup di log E anchor locali a quota 1.
+        l.submit(
+            &f.node,
+            vec![SignedTransaction::transfer(
+                &f.creator,
+                chain,
+                0,
+                alice.address,
+                1,
+            )],
+        )
+        .unwrap();
+        fs::copy(f.data.join("ledger.log"), f.data.join("ledger.log.bak1")).unwrap();
+        fs::copy(
+            f.data.join("ledger.anchor"),
+            f.data.join("ledger.anchor.bak1"),
+        )
+        .unwrap();
+        // Rotazione a quota 2 e un blocco nel segmento ruotato (quota 3).
+        l.enable_checkpoints(2);
+        l.submit(
+            &f.node,
+            vec![SignedTransaction::transfer(
+                &f.creator,
+                chain,
+                1,
+                alice.address,
+                1,
+            )],
+        )
+        .unwrap();
+        l.submit(
+            &f.node,
+            vec![SignedTransaction::transfer(
+                &f.creator,
+                chain,
+                2,
+                alice.address,
+                1,
+            )],
+        )
+        .unwrap();
+    }
+    // Attacco: ripristino del segmento STALE di quota 1 con cancellazione
+    // del checkpoint. Il log è pieno e valido, l'anchor ripristinato è
+    // coerente con il log: SOLO il journal esterno (a quota 3) può
+    // smascherare il rollback.
+    let _ = fs::remove_file(f.data.join("ledger.ckpt"));
+    fs::copy(f.data.join("ledger.log.bak1"), f.data.join("ledger.log")).unwrap();
+    fs::copy(
+        f.data.join("ledger.anchor.bak1"),
+        f.data.join("ledger.anchor"),
+    )
+    .unwrap();
+    match Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator) {
+        Err(LedgerError::RollbackDetected { source, .. }) => {
+            assert_eq!(source, "esterno (journal)");
+        }
+        other => panic!(
+            "atteso RollbackDetected dal journal, ottenuto {:?}",
+            other.map(|_| ())
+        ),
+    }
+}
+
+#[test]
+fn open_independent_rejects_same_device() {
+    let f = fixture("independent");
+    // data ed ext sotto la STESSA directory temporanea: stesso filesystem.
+    // L'apertura STRICT deve rifiutare: journal e dati sullo stesso device
+    // non danno alcuna indipendenza reale.
+    match Ledger::open_independent(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator) {
+        Err(LedgerError::JournalNotIndependent { .. }) => {}
+        other => panic!(
+            "attesa JournalNotIndependent, ottenuto {:?}",
+            other.map(|_| ())
+        ),
+    }
+    // L'apertura classica ammette lo stesso layout: l'indipendenza è una
+    // proprietà dichiarata del deployment, non imposta da open().
+    let l = Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator).unwrap();
+    assert_eq!(l.state.height, 0);
+}

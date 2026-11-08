@@ -5,12 +5,17 @@
 
 use crate::*;
 
+use borsh::{BorshDeserialize, BorshSerialize};
 use std::collections::HashMap;
 
 // ---------------------------------------------------------------------------
 // Stato: applicazione IN PLACE con undo log (v0.12) e invariante incrementale
 // ---------------------------------------------------------------------------
-#[derive(Clone, Debug, PartialEq)]
+// Derive borsh (v0.13): richiesti dal checkpoint firmato, che serializza lo
+// stato contabile. La serializzazione HashMap non è a ordine canonico: il
+// checkpoint è firmato sui BYTE SCRITTI e verificato sugli stessi byte letti
+// (nessuna ri-serializzazione), quindi il determinismo non è richiesto.
+#[derive(Clone, Debug, PartialEq, BorshSerialize, BorshDeserialize)]
 pub struct Account {
     pub balance: u64,
     pub nonce: u64,
@@ -18,7 +23,7 @@ pub struct Account {
     pub claimed: bool,
 }
 
-#[derive(Clone)]
+#[derive(Clone, BorshSerialize, BorshDeserialize)]
 pub struct LedgerState {
     pub genesis: GenesisRecord,
     pub accounts: HashMap<Address, Account>,

@@ -1,6 +1,6 @@
 [package]
 name = "token-postquantum-export"
-version = "0.12.0"
+version = "0.13.0"
 edition = "2021"
 description = "Esportazione JSON/JSONL per explorer e indexer: vista derivata, non autoritativa"
 publish = false

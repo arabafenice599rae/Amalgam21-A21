@@ -42,6 +42,9 @@ pub enum LedgerError {
         log_height: u64,
         source: &'static str,
     },
+    JournalNotIndependent {
+        reason: String,
+    },
     Io(std::io::Error),
 }
 
@@ -121,6 +124,9 @@ impl std::fmt::Display for LedgerError {
                     "rollback rilevato (anchor {} a quota {} vs log a quota {})",
                     source, anchor_height, log_height
                 )
+            }
+            LedgerError::JournalNotIndependent { reason } => {
+                write!(f, "journal non indipendente: {}", reason)
             }
             LedgerError::Io(e) => write!(f, "errore I/O: {}", e),
         }

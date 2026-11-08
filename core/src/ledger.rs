@@ -1,5 +1,7 @@
 // ============================================================================
-// core/src/ledger.rs — Persistenza: log append-only + anchor locale + journal.
+// core/src/ledger.rs — Persistenza: log append-only + anchor locale + journal
+// esterno. v0.13: checkpoint firmato con rotazione dei segmenti di log e
+// apertura STRICT che rifiuta journal sullo stesso device dei dati.
 // ============================================================================
 
 use crate::*;
@@ -8,26 +10,74 @@ use std::fs::{self, File, OpenOptions};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-// ---------------------------------------------------------------------------
-// Persistenza: log append-only + anchor locale + journal esterno
-// ---------------------------------------------------------------------------
+/// Vista del checkpoint usata dalla verifica del log segmentato.
+pub(crate) struct CheckpointView<'a> {
+    pub genesis: &'a GenesisRecord,
+    pub height: u64,
+    pub tip_record_hash: Hash,
+}
+
 pub struct Ledger {
     pub state: LedgerState,
+    log_dir: PathBuf,
     log_path: PathBuf,
     anchor_path: PathBuf,
+    ckpt_path: PathBuf,
     journal: AnchorJournal,
     tip_record_hash: Hash,
-    log: File,
+    log: Option<File>,
+    /// Politica di rotazione (v0.13): Some(n) = checkpoint + archiviazione
+    /// del segmento ogni n blocchi; None = comportamento v0.12 (segmento
+    /// unico, cap MAX_LOG_BYTES).
+    ckpt_every: Option<u64>,
+    last_ckpt_height: u64,
     operational: bool,
+}
+
+fn open_append(path: &Path) -> Result<File, LedgerError> {
+    let mut o = OpenOptions::new();
+    o.create(true).append(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        o.mode(0o600);
+    }
+    Ok(o.open(path)?)
 }
 
 impl Ledger {
     pub fn open(
         dir: &Path,
-        ext_dir: &Path, // PLACEHOLDER: in produzione, endpoint indipendente
+        ext_dir: &Path,
         params: GenesisParams,
         node: &Wallet,
         creator: &Wallet,
+    ) -> Result<Self, LedgerError> {
+        Self::open_inner(dir, ext_dir, params, node, creator, false)
+    }
+
+    /// Apertura STRICT (v0.13): rifiuta l'apertura se il journal risiede sul
+    /// STESSO filesystem dei dati. In quel caso non esiste indipendenza
+    /// reale: chi controlla il filesystem può riscrivere anche il journal.
+    /// L'indipendenza è una proprietà dell'endpoint: questa verifica la
+    /// impone a monte (st_dev differente) invece di dichiararla altrove.
+    pub fn open_independent(
+        dir: &Path,
+        ext_dir: &Path,
+        params: GenesisParams,
+        node: &Wallet,
+        creator: &Wallet,
+    ) -> Result<Self, LedgerError> {
+        Self::open_inner(dir, ext_dir, params, node, creator, true)
+    }
+
+    fn open_inner(
+        dir: &Path,
+        ext_dir: &Path,
+        params: GenesisParams,
+        node: &Wallet,
+        creator: &Wallet,
+        strict_ext: bool,
     ) -> Result<Self, LedgerError> {
         if params.total_supply == 0 {
             return Err(LedgerError::ZeroAmount);
@@ -36,8 +86,20 @@ impl Ledger {
         params.validate_economics()?;
         fs::create_dir_all(dir)?;
         fs::create_dir_all(ext_dir)?;
+        #[cfg(unix)]
+        if strict_ext {
+            use std::os::unix::fs::MetadataExt;
+            let dev_data = fs::metadata(dir)?.dev();
+            let dev_ext = fs::metadata(ext_dir)?.dev();
+            if dev_data == dev_ext {
+                return Err(LedgerError::JournalNotIndependent {
+                    reason: "journal e dati sullo stesso device (st_dev identico)".into(),
+                });
+            }
+        }
         let log_path = dir.join("ledger.log");
         let anchor_path = dir.join("ledger.anchor");
+        let ckpt_path = dir.join("ledger.ckpt");
         let journal = AnchorJournal::new(ext_dir.join("anchor-journal.log"));
         let genesis_hash = genesis_identity_hash(
             &params,
@@ -46,73 +108,174 @@ impl Ledger {
             &creator.verification_key,
         );
 
+        // Checkpoint firmato (v0.13), se presente.
+        let ck = if ckpt_path.exists() {
+            let c = checkpoint::read(&ckpt_path)?;
+            if c.genesis_hash != genesis_hash {
+                return Err(LedgerError::ConfigMismatch {
+                    reason: "checkpoint di un'altra catena (genesis hash diverso)".into(),
+                });
+            }
+            Some(c)
+        } else {
+            None
+        };
+
         // Un log VUOTO (0 byte: crash tra creazione e prima scrittura) è
-        // trattato come assente e reinizializzato; un errore di lettura
-        // diverso da NotFound resta BLOCCANTE (mai mascherare un danno).
+        // trattato come assente; un errore di lettura diverso da NotFound
+        // resta BLOCCANTE (mai mascherare un danno).
         let log_has_content = match fs::metadata(&log_path) {
             Ok(m) => m.len() > 0,
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => false,
             Err(e) => return Err(e.into()),
         };
-        let (genesis_rec, records, loaded_tip) = if log_has_content {
-            let (g, r, t) = Self::read_and_verify_log(&log_path, &anchor_path, &journal)?;
-            if g.genesis_hash != genesis_hash {
-                return Err(LedgerError::ConfigMismatch {
-                    reason: "genesis hash differente dai parametri e dalle identità forniti".into(),
-                });
-            }
-            if g.node_vk != node.verification_key {
-                return Err(LedgerError::ConfigMismatch {
-                    reason: "node verification key differente".into(),
-                });
-            }
-            if g.creator_vk != creator.verification_key {
-                return Err(LedgerError::ConfigMismatch {
-                    reason: "creator verification key differente".into(),
-                });
-            }
-            if g.creator_address != creator.address {
-                return Err(LedgerError::ConfigMismatch {
-                    reason: "creator address differente".into(),
-                });
-            }
-            if address_of(&g.creator_vk) != g.creator_address {
-                return Err(LedgerError::TamperDetected {
-                    at_record: 0,
-                    reason: "creator address non deriva dalla creator vk".into(),
-                });
-            }
-            (g, r, t)
+        let (full_mode, genesis_rec, records, loaded_tip) = if log_has_content {
+            let base = ck.as_ref().map(|c| CheckpointView {
+                genesis: &c.state.genesis,
+                height: c.height,
+                tip_record_hash: c.tip_record_hash,
+            });
+            let (g, recs, tip) =
+                Self::read_and_verify_log_base(&log_path, &anchor_path, &journal, base.as_ref())?;
+            let rotated = g.is_none();
+            let genesis_rec = match g {
+                Some(g0) => g0,
+                None => ck
+                    .as_ref()
+                    .expect("segmento ruotato implica checkpoint")
+                    .state
+                    .genesis
+                    .clone(),
+            };
+            (!rotated, genesis_rec, recs, tip)
         } else {
-            // Il log è assente o VUOTO (0 byte: crash prima dell'header).
-            // Un crash genuino implica journal VUOTO: le ancore seguono
-            // SEMPRE la scrittura del log. Se il journal contiene già voci,
-            // lo stato è incoerente (o manipolato): rifiuto bloccante.
-            let last = journal
-                .read_last(&node.verification_key, &genesis_hash)
-                .map_err(|e| LedgerError::TamperDetected {
-                    at_record: 0,
-                    reason: format!("journal: {}", e),
-                })?;
-            if last.is_some() {
-                return Err(LedgerError::TamperDetected {
-                    at_record: 0,
-                    reason: "log vuoto ma il journal esterno contiene ancore: stato incoerente"
-                        .into(),
-                });
+            // Log assente o VUOTO (0 byte).
+            match &ck {
+                Some(c) => {
+                    // Recovery post-rotazione: il log NUOVO parte vuoto,
+                    // SENZA genesis: la catena dei record continua dal
+                    // checkpoint. La punta deve essere confermata dal
+                    // journal (append-only, monotono): il caso v0.12 "log
+                    // vuoto + journal non vuoto = incoerente" NON vale qui,
+                    // la rotazione è avvenuta legittimamente.
+                    let last = journal
+                        .read_last(&c.state.genesis.node_vk, &c.state.genesis.genesis_hash)
+                        .map_err(|e| LedgerError::TamperDetected {
+                            at_record: 0,
+                            reason: format!("journal: {}", e),
+                        })?;
+                    match last {
+                        Some((jh, jt)) => {
+                            if jh > c.height {
+                                return Err(LedgerError::RollbackDetected {
+                                    anchor_height: jh,
+                                    log_height: c.height,
+                                    source: "esterno (journal)",
+                                });
+                            }
+                            if jh < c.height {
+                                return Err(LedgerError::TamperDetected {
+                                    at_record: 0,
+                                    reason:
+                                        "journal precedente al checkpoint: violazione di monotonia"
+                                            .into(),
+                                });
+                            }
+                            if jt != c.tip_record_hash {
+                                return Err(LedgerError::TamperDetected {
+                                    at_record: 0,
+                                    reason: "tip del checkpoint non corrisponde al journal".into(),
+                                });
+                            }
+                        }
+                        None if c.height > 0 => {
+                            return Err(LedgerError::TamperDetected {
+                                at_record: 0,
+                                reason: "journal vuoto con checkpoint a altezza positiva: \
+                                         ancore cancellate"
+                                    .into(),
+                            });
+                        }
+                        None => {}
+                    }
+                    (
+                        false,
+                        c.state.genesis.clone(),
+                        Vec::new(),
+                        c.tip_record_hash,
+                    )
+                }
+                None => {
+                    // Un crash genuino pre-genesis implica journal VUOTO:
+                    // le ancore seguono SEMPRE la scrittura del log. Se il
+                    // journal contiene già voci, lo stato è incoerente (o
+                    // manipolato): rifiuto bloccante.
+                    let last = journal
+                        .read_last(&node.verification_key, &genesis_hash)
+                        .map_err(|e| LedgerError::TamperDetected {
+                            at_record: 0,
+                            reason: format!("journal: {}", e),
+                        })?;
+                    if last.is_some() {
+                        return Err(LedgerError::TamperDetected {
+                            at_record: 0,
+                            reason: "log vuoto ma il journal esterno contiene ancore: \
+                                     stato incoerente"
+                                .into(),
+                        });
+                    }
+                    (
+                        true,
+                        GenesisRecord::signed(params, node, creator),
+                        Vec::new(),
+                        genesis_hash,
+                    )
+                }
             }
-            (
-                GenesisRecord::signed(params, node, creator),
-                Vec::new(),
-                genesis_hash,
-            )
         };
+
+        // Verifica di configurazione contro il chiamante (invariata).
+        if genesis_rec.genesis_hash != genesis_hash {
+            return Err(LedgerError::ConfigMismatch {
+                reason: "genesis hash differente dai parametri e dalle identità forniti".into(),
+            });
+        }
+        if genesis_rec.node_vk != node.verification_key {
+            return Err(LedgerError::ConfigMismatch {
+                reason: "node verification key differente".into(),
+            });
+        }
+        if genesis_rec.creator_vk != creator.verification_key {
+            return Err(LedgerError::ConfigMismatch {
+                reason: "creator verification key differente".into(),
+            });
+        }
+        if genesis_rec.creator_address != creator.address {
+            return Err(LedgerError::ConfigMismatch {
+                reason: "creator address differente".into(),
+            });
+        }
+        if address_of(&genesis_rec.creator_vk) != genesis_rec.creator_address {
+            return Err(LedgerError::TamperDetected {
+                at_record: 0,
+                reason: "creator address non deriva dalla creator vk".into(),
+            });
+        }
 
         // Collisione creatore/conto di sistema rifiutata: senza questo
         // controllo un conto sovrascriverebbe l'altro al genesis.
         genesis_rec.check_identity_collision()?;
 
-        let mut state = LedgerState::new(genesis_rec);
+        // Stato iniziale del replay: dal genesis (log pieno) o dal checkpoint
+        // (segmento ruotato o recovery a vuoto).
+        let mut state = if full_mode {
+            LedgerState::new(genesis_rec)
+        } else {
+            ck.as_ref()
+                .expect("segmento ruotato implica checkpoint")
+                .state
+                .clone()
+        };
         for (i, rec) in records.iter().enumerate() {
             match rec {
                 Record::Block(b) => {
@@ -151,49 +314,78 @@ impl Ledger {
 
         let mut ledger = Ledger {
             state,
+            log_dir: dir.to_path_buf(),
             log_path: log_path.clone(),
             anchor_path,
+            ckpt_path,
             journal,
             tip_record_hash: loaded_tip,
-            log: {
-                let mut o = OpenOptions::new();
-                o.create(true).append(true);
-                #[cfg(unix)]
-                {
-                    use std::os::unix::fs::OpenOptionsExt;
-                    o.mode(0o600);
-                }
-                o.open(&log_path)?
-            },
+            log: None,
+            ckpt_every: None,
+            last_ckpt_height: ck.as_ref().map(|c| c.height).unwrap_or(0),
             operational: true,
         };
-        if fs::metadata(&ledger.log_path)?.len() == 0 {
+        let log_is_empty = !log_has_content;
+        if log_is_empty && ck.is_none() {
+            // v0.12: log fresco, header + record di genesis.
+            ledger.log = Some(open_append(&log_path)?);
             let mut head = Vec::new();
             head.extend_from_slice(FILE_MAGIC);
             head.extend_from_slice(&FILE_VERSION.to_le_bytes());
-            ledger.log.write_all(&head)?;
+            // write_all sull'handle appena aperto (nessun record pendente).
+            let f = ledger.log.as_mut().expect("appena aperto");
+            f.write_all(&head)?;
             let g = Record::Genesis(ledger.state.genesis.clone());
             ledger.append_record(node, &g, 0)?;
+        } else if log_is_empty {
+            // Recovery post-rotazione: log vuoto SENZA genesis, catena che
+            // continua dal checkpoint; ancore risincronizzate alla punta.
+            ledger.log = Some(open_append(&log_path)?);
+            let c = ck.as_ref().expect("log vuoto con checkpoint");
+            ledger.write_anchors(node, c.height, c.tip_record_hash)?;
         } else {
             // Recovery: crash tra log e anchor lascia il log avanti; gli
             // anchor sono risincronizzati alla punta del log verificato.
             let height = ledger.state.height;
             let tip = ledger.tip_record_hash;
+            ledger.log = Some(open_append(&log_path)?);
             ledger.write_anchors(node, height, tip)?;
         }
         Ok(ledger)
     }
 
+    /// API pubblica invariata (v0.12): verifica un log pieno che inizia col
+    /// record di genesis.
     pub fn read_and_verify_log(
         log_path: &Path,
         anchor_path: &Path,
         journal: &AnchorJournal,
     ) -> Result<(GenesisRecord, Vec<Record>, Hash), LedgerError> {
+        let (g, recs, tip) = Self::read_and_verify_log_base(log_path, anchor_path, journal, None)?;
+        Ok((
+            g.expect("log pieno senza segmentazione contiene il genesis"),
+            recs,
+            tip,
+        ))
+    }
+
+    /// Verifica un segmento di log. `ck` (se presente) fornisce la base per i
+    /// segmenti ruotati (primo record = blocco, seme = tip del checkpoint)
+    /// e il cross-check del checkpoint sui segmenti pieni. Gli anchor sono
+    /// validati su ALTEZZE ASSOLUTE: base + offset del segmento.
+    fn read_and_verify_log_base(
+        log_path: &Path,
+        anchor_path: &Path,
+        journal: &AnchorJournal,
+        ck: Option<&CheckpointView>,
+    ) -> Result<(Option<GenesisRecord>, Vec<Record>, Hash), LedgerError> {
         let meta = fs::metadata(log_path)?;
+        // Cap PER SEGMENTO (v0.13): la rotazione rende la storia totale non
+        // limitata da questo valore.
         if meta.len() > MAX_LOG_BYTES {
             return Err(LedgerError::TamperDetected {
                 at_record: 0,
-                reason: "log oltre il limite di dimensione".into(),
+                reason: "segmento di log oltre il limite di dimensione".into(),
             });
         }
         let raw = fs::read(log_path)?;
@@ -213,7 +405,8 @@ impl Ledger {
         let mut records: Vec<Record> = Vec::new();
         let mut chain_hashes: Vec<Hash> = Vec::new();
         let mut prev_hash: Option<Hash> = None;
-        let mut node_vk: Option<[u8; VK_SIZE]> = None; // dal genesis (record 0)
+        let mut node_vk: Option<[u8; VK_SIZE]> = None; // genesis o checkpoint
+        let mut is_rotated = false; // deciso al primo record
         let mut pos = 12usize;
         let mut idx = 0u64;
         while pos < raw.len() {
@@ -243,11 +436,6 @@ impl Ledger {
                 at_record: idx,
                 reason: "record non deserializzabile o byte residui".into(),
             })?;
-            let seed = prev_hash.unwrap_or(match &rec {
-                Record::Genesis(g) => g.genesis_hash,
-                Record::Block(_) => [0u8; HASH_SIZE],
-            });
-            let h = record_chain_hash(&seed, rec_bytes);
             match &rec {
                 Record::Genesis(g) => {
                     if idx != 0 {
@@ -278,6 +466,17 @@ impl Ledger {
                     node_vk = Some(g.node_vk);
                 }
                 Record::Block(b) => {
+                    if idx == 0 {
+                        // Segmento ruotato (v0.13): il primo record è un
+                        // blocco; base e identità provengono dal checkpoint
+                        // firmato. Senza checkpoint: rifiuto bloccante.
+                        let c = ck.ok_or_else(|| LedgerError::TamperDetected {
+                            at_record: 0,
+                            reason: "segmento di log ruotato senza checkpoint".into(),
+                        })?;
+                        is_rotated = true;
+                        node_vk = Some(c.genesis.node_vk);
+                    }
                     // VERIFICA COMPLETA DI OGNI BLOCCO: firma del propositore
                     // oltre all'hash dell'header.
                     let vk = node_vk.ok_or_else(|| LedgerError::TamperDetected {
@@ -292,22 +491,66 @@ impl Ledger {
                     }
                 }
             }
+            let seed = match prev_hash {
+                Some(h) => h,
+                None if is_rotated => {
+                    ck.expect("segmento ruotato implica checkpoint")
+                        .tip_record_hash
+                }
+                None => match &rec {
+                    Record::Genesis(g) => g.genesis_hash,
+                    Record::Block(_) => [0u8; HASH_SIZE],
+                },
+            };
+            let h = record_chain_hash(&seed, rec_bytes);
             prev_hash = Some(h);
             chain_hashes.push(h);
             records.push(rec);
             idx += 1;
         }
-        if records.is_empty() || !matches!(records[0], Record::Genesis(_)) {
+        if records.is_empty() {
             return Err(LedgerError::TamperDetected {
                 at_record: 0,
                 reason: "genesis mancante".into(),
             });
         }
-        let genesis = match records.remove(0) {
-            Record::Genesis(g) => g,
-            _ => unreachable!(),
+        // Base del segmento in ALTEZZE ASSOLUTE.
+        let base_height = if is_rotated {
+            ck.expect("segmento ruotato implica checkpoint").height
+        } else {
+            0
         };
-        let log_height = records.len() as u64;
+        let genesis: GenesisRecord = if is_rotated {
+            ck.expect("segmento ruotato implica checkpoint")
+                .genesis
+                .clone()
+        } else {
+            if !matches!(records[0], Record::Genesis(_)) {
+                return Err(LedgerError::TamperDetected {
+                    at_record: 0,
+                    reason: "genesis mancante".into(),
+                });
+            }
+            match records.remove(0) {
+                Record::Genesis(g) => g,
+                _ => unreachable!(),
+            }
+        };
+        // Cross-check del checkpoint sui segmenti PIENI: crash tra scrittura
+        // del checkpoint e rotazione lascia il log pieno; la catena al
+        // checkpoint deve corrispondere al tip firmato.
+        if !is_rotated {
+            if let Some(c) = ck {
+                let i = c.height as usize;
+                if i >= chain_hashes.len() || c.tip_record_hash != chain_hashes[i] {
+                    return Err(LedgerError::TamperDetected {
+                        at_record: c.height,
+                        reason: "catena dei record non corrisponde al checkpoint".into(),
+                    });
+                }
+            }
+        }
+        let log_height = base_height + records.len() as u64;
         let tip_record_hash = chain_hashes.last().copied().unwrap_or(genesis.genesis_hash);
 
         // ANCHOR LOCALE (file firmato, riscrivibile): controllo rapido.
@@ -344,10 +587,35 @@ impl Ledger {
                 source: "locale",
             });
         }
-        let idx_local = file.payload.height as usize;
-        if idx_local >= chain_hashes.len()
-            || file.payload.tip_record_hash != chain_hashes[idx_local]
-        {
+        if file.payload.height < base_height {
+            return Err(LedgerError::TamperDetected {
+                at_record: file.payload.height,
+                reason: "anchor precedente alla base della catena ricostruibile".into(),
+            });
+        }
+        // Tip atteso: alla base di un segmento ruotato è il tip FIRMATO del
+        // checkpoint (crash tra append del log e scrittura dell'anchor);
+        // altrove è l'hash di catena del record alla quota dell'anchor
+        // (indice assoluto nei segmenti pieni, che includono il genesis in
+        // posizione 0; relativo nei segmenti ruotati).
+        let expected_local = if file.payload.height == base_height && is_rotated {
+            ck.expect("segmento ruotato implica checkpoint")
+                .tip_record_hash
+        } else {
+            let idx = if is_rotated {
+                (file.payload.height - base_height - 1) as usize
+            } else {
+                file.payload.height as usize
+            };
+            if idx >= chain_hashes.len() {
+                return Err(LedgerError::TamperDetected {
+                    at_record: file.payload.height,
+                    reason: "quota dell'anchor oltre la catena del segmento".into(),
+                });
+            }
+            chain_hashes[idx]
+        };
+        if file.payload.tip_record_hash != expected_local {
             return Err(LedgerError::TamperDetected {
                 at_record: file.payload.height,
                 reason: "catena dei record non corrisponde all'anchor locale".into(),
@@ -377,14 +645,42 @@ impl Ledger {
                 source: "esterno (journal)",
             });
         }
-        let idx_journal = j_height as usize;
-        if idx_journal >= chain_hashes.len() || j_tip != chain_hashes[idx_journal] {
+        if j_height < base_height {
+            return Err(LedgerError::TamperDetected {
+                at_record: j_height,
+                reason: "journal precedente alla base della catena ricostruibile".into(),
+            });
+        }
+        // Stessa regola del tip atteso dell'anchor locale (base = tip del
+        // checkpoint firmato).
+        let expected_journal = if j_height == base_height && is_rotated {
+            ck.expect("segmento ruotato implica checkpoint")
+                .tip_record_hash
+        } else {
+            let idx = if is_rotated {
+                (j_height - base_height - 1) as usize
+            } else {
+                j_height as usize
+            };
+            if idx >= chain_hashes.len() {
+                return Err(LedgerError::TamperDetected {
+                    at_record: j_height,
+                    reason: "quota del journal oltre la catena del segmento".into(),
+                });
+            }
+            chain_hashes[idx]
+        };
+        if j_tip != expected_journal {
             return Err(LedgerError::TamperDetected {
                 at_record: j_height,
                 reason: "catena dei record non corrisponde al journal esterno".into(),
             });
         }
-        Ok((genesis, records, tip_record_hash))
+        Ok((
+            if is_rotated { None } else { Some(genesis) },
+            records,
+            tip_record_hash,
+        ))
     }
 
     fn append_record(
@@ -397,23 +693,29 @@ impl Ledger {
         let bytes = borsh::to_vec(rec).map_err(|_| LedgerError::Overflow)?;
         let new_tip = record_chain_hash(&old_tip, &bytes);
         let len_bytes = (bytes.len() as u32).to_le_bytes();
-        let result: Result<(), LedgerError> = (|| {
-            self.log.write_all(&len_bytes)?;
-            self.log.write_all(&bytes)?;
-            self.log.sync_all()?;
-            self.write_anchors(node, new_height, new_tip)?;
+        // Scrittura del record nel segmento corrente. Il borrow del file è
+        // confinato in questo blocco: l'anchor viene scritto DOPO, con il
+        // borrow mutabile di self già rilasciato.
+        let write_result: Result<(), LedgerError> = {
+            let f = self.log.as_mut().ok_or(LedgerError::NotOperative)?;
+            f.write_all(&len_bytes)?;
+            f.write_all(&bytes)?;
+            f.sync_all()?;
             Ok(())
-        })();
-        match result {
-            Ok(()) => {
-                self.tip_record_hash = new_tip;
-                Ok(())
-            }
-            Err(e) => {
-                self.operational = false;
-                Err(e)
-            }
+        };
+        if let Err(e) = write_result {
+            self.operational = false;
+            return Err(e);
         }
+        // Ancore DOPO il record: al riavvio il log può essere al massimo
+        // AHEAD delle ancore (crash tra le due scritture) e viene
+        // risincronizzato; il contrario (ancore avanti) è impossibile.
+        if let Err(e) = self.write_anchors(node, new_height, new_tip) {
+            self.operational = false;
+            return Err(e);
+        }
+        self.tip_record_hash = new_tip;
+        Ok(())
     }
 
     fn write_anchors(&self, node: &Wallet, height: u64, tip: Hash) -> Result<(), LedgerError> {
@@ -427,6 +729,55 @@ impl Ledger {
         atomic_write(&self.anchor_path, &bytes)?;
         // Pubblicazione append-only (idempotente) verso il journal esterno.
         self.journal.publish(node, payload)?;
+        Ok(())
+    }
+
+    /// Attiva la rotazione (v0.13): checkpoint firmato + archiviazione del
+    /// segmento di log ogni `every_n_blocks` blocchi. Rimuove il limite di
+    /// durata del log (il cap MAX_LOG_BYTES diventa per segmento).
+    /// `every_n_blocks = 0` disattiva (comportamento v0.12).
+    pub fn enable_checkpoints(&mut self, every_n_blocks: u64) {
+        self.ckpt_every = if every_n_blocks == 0 {
+            None
+        } else {
+            Some(every_n_blocks)
+        };
+    }
+
+    /// Scrive ORA un checkpoint firmato e ruota il segmento di log. Ordine
+    /// crash-safe: (1) checkpoint atomico e sincronizzato; (2) chiusura
+    /// dell'handle del log; (3) rename del log in ledger.log.<height>;
+    /// (4) nuovo log con solo header. Un crash in qualunque punto lascia
+    /// uno stato riapribile e verificabile (journal + checkpoint).
+    pub fn write_checkpoint_now(&mut self, node: &Wallet) -> Result<(), LedgerError> {
+        let h = self.state.height;
+        let tip = self.tip_record_hash;
+        checkpoint::write(&self.ckpt_path, node, &self.state, h, tip)?;
+        self.last_ckpt_height = h;
+        // Chiusura dell'handle PRIMA dell'archiviazione del segmento.
+        self.log = None;
+        let archived = self.log_dir.join(format!("ledger.log.{}", h));
+        if self.log_path.exists() {
+            fs::rename(&self.log_path, &archived)?;
+        }
+        let mut f = open_append(&self.log_path)?;
+        let mut head = Vec::new();
+        head.extend_from_slice(FILE_MAGIC);
+        head.extend_from_slice(&FILE_VERSION.to_le_bytes());
+        f.write_all(&head)?;
+        f.sync_all()?;
+        self.log = Some(f);
+        Ok(())
+    }
+
+    fn rotate_if_due(&mut self, node: &Wallet) -> Result<(), LedgerError> {
+        let every = match self.ckpt_every {
+            Some(e) => e,
+            None => return Ok(()),
+        };
+        if self.state.height >= self.last_ckpt_height.saturating_add(every) {
+            self.write_checkpoint_now(node)?;
+        }
         Ok(())
     }
 
@@ -457,6 +808,7 @@ impl Ledger {
         // byte-identico e il blocco non viene scritto.
         self.state.apply_block(&block)?;
         self.append_record(node, &Record::Block(block), self.state.height)?;
+        self.rotate_if_due(node)?;
         Ok(())
     }
 }

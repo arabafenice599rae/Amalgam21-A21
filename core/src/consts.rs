@@ -26,6 +26,12 @@ pub(crate) const DERIVE_DOMAIN: &[u8] = b"com.amalgam21.derive.v2";
 pub(crate) const ADDR_ENCODING_DOMAIN: &[u8] = b"com.amalgam21.addr.enc.v2";
 pub(crate) const FILE_MAGIC: &[u8; 8] = b"AMG2LEDG";
 pub(crate) const FILE_VERSION: u32 = 2;
+// Checkpoint firmato (v0.13): file NUOVO, nessun formato esistente cambia.
+// Versione 2 per coerenza con gli altri formati a firma della catena.
+pub(crate) const CKPT_MAGIC: &[u8; 8] = b"AMG2CKPT";
+pub(crate) const CKPT_VERSION: u32 = 2;
+pub(crate) const CKPT_CONTEXT: &[u8] = b"com.amalgam21.ckpt.v2";
+pub(crate) const MAX_CKPT_BYTES: u64 = 1 << 30;
 pub(crate) const JOURNAL_MAGIC: &[u8; 8] = b"AMG2JRNL";
 pub(crate) const JOURNAL_VERSION: u32 = 2;
 pub(crate) const WALLET_MAGIC: &[u8; 8] = b"AMGWALL2";
