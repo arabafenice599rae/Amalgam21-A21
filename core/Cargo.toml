@@ -19,7 +19,7 @@ rpassword = "7"            # prompt passphrase senza eco (solo binario demo)
 [dev-dependencies]
 proptest = "1"             # property testing; mantenuto da proptest-rs, ampiamente adottato
 criterion = "0.5"          # benchmark statistici; standard de facto in Rust
-iai-callgrind = "0.10"     # conteggio istruzioni esatto via Valgrind; deterministico in CI
+iai-callgrind = "0.16"     # conteggio istruzioni esatto via Valgrind; deterministico in CI
 
 [[bench]]
 name = "ledger"
