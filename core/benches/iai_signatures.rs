@@ -28,7 +28,7 @@ fn keygen_and_sign_128b() {
 
 library_benchmark_group!(
     name = iai_signatures;
-    benchmarks = [keygen_and_sign_128b]
+    benchmarks = keygen_and_sign_128b
 );
 
 main!(library_benchmark_groups = iai_signatures);

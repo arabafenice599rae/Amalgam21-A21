@@ -76,7 +76,7 @@ fn reopen_10_blocks() {
 
 library_benchmark_group!(
     name = iai_persistence;
-    benchmarks = [reopen_10_blocks]
+    benchmarks = reopen_10_blocks
 );
 
 main!(library_benchmark_groups = iai_persistence);
