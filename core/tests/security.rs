@@ -79,10 +79,7 @@ fn claim_then_forged_transfer_same_block_rejected() {
     forged.signature = vec![0u8; token_postquantum::SIG_SIZE];
     match l.submit(&node, vec![claim, forged]) {
         Err(LedgerError::InvalidSignature) => {}
-        other => panic!(
-            "attesa InvalidSignature, ottenuto {:?}",
-            other.map(|_| ())
-        ),
+        other => panic!("attesa InvalidSignature, ottenuto {:?}", other.map(|_| ())),
     }
     assert_eq!(l.state.accounts, before);
     assert_eq!(l.state.balance(&alice.address), 100);
@@ -101,7 +98,10 @@ fn duplicate_nonce_in_same_block_rejected() {
     let a = SignedTransaction::transfer(&alice, chain, 1, creator.address, 5);
     let b = SignedTransaction::transfer(&alice, chain, 1, creator.address, 6);
     match l.submit(&node, vec![a, b]) {
-        Err(LedgerError::BadNonce { expected: 2, got: 1 }) => {}
+        Err(LedgerError::BadNonce {
+            expected: 2,
+            got: 1,
+        }) => {}
         other => panic!("attesa BadNonce, ottenuto {:?}", other.map(|_| ())),
     }
     assert_eq!(l.state.accounts, before);
@@ -151,7 +151,9 @@ fn max_amount_overflow_rejected() {
 fn claims_at_airdrop_limit_boundary() {
     let (_, _, node, _creator, mut l) = open("airdrop-limit");
     let chain = l.state.genesis.genesis_hash;
-    let wallets: Vec<Wallet> = (0..4u64).map(|i| Wallet::from_seed(seed(100 + i))).collect();
+    let wallets: Vec<Wallet> = (0..4u64)
+        .map(|i| Wallet::from_seed(seed(100 + i)))
+        .collect();
     for w in &wallets {
         l.submit(&node, vec![SignedTransaction::claim(w, chain, 0)])
             .unwrap();

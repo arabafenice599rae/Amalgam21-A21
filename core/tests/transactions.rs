@@ -90,10 +90,7 @@ fn transfer_from_unclaimed_account_rejected() {
         )],
     ) {
         Err(LedgerError::UnclaimedAccount(_)) => {}
-        other => panic!(
-            "attesa UnclaimedAccount, ottenuto {:?}",
-            other.map(|_| ())
-        ),
+        other => panic!("attesa UnclaimedAccount, ottenuto {:?}", other.map(|_| ())),
     }
     assert_eq!(l.state.accounts, before);
 }
@@ -210,7 +207,10 @@ fn nonce_progression_and_reuse() {
             5,
         )],
     ) {
-        Err(LedgerError::BadNonce { expected: 3, got: 2 }) => {}
+        Err(LedgerError::BadNonce {
+            expected: 3,
+            got: 2,
+        }) => {}
         other => panic!("attesa BadNonce, ottenuto {:?}", other.map(|_| ())),
     }
     assert_eq!(l.state.nonce(&alice.address), 3);

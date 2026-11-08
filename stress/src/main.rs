@@ -151,11 +151,7 @@ fn run_episode(args: &Args, episode: u64, txs: u64) -> EpisodeStats {
     let mut funding = Vec::with_capacity(wallets.len());
     for (i, w) in wallets.iter().enumerate() {
         funding.push(SignedTransaction::transfer(
-            &creator,
-            chain,
-            i as u64,
-            w.address,
-            per_wallet,
+            &creator, chain, i as u64, w.address, per_wallet,
         ));
     }
     sign += t.elapsed();
@@ -185,7 +181,13 @@ fn run_episode(args: &Args, episode: u64, txs: u64) -> EpisodeStats {
         for k in 0..n {
             let s = (done + k) as usize % wallets.len();
             let to = wallets[(s + 1) % wallets.len()].address;
-            batch.push(SignedTransaction::transfer(&wallets[s], chain, nonces[s], to, 1));
+            batch.push(SignedTransaction::transfer(
+                &wallets[s],
+                chain,
+                nonces[s],
+                to,
+                1,
+            ));
             nonces[s] += 1;
         }
         sign += t.elapsed();

@@ -52,16 +52,18 @@ pub fn bench_block_pipeline(c: &mut Criterion) {
     let wallets: Vec<Wallet> = (0..8u64)
         .map(|i| Wallet::from_seed(seed(7_000 + i)))
         .collect();
-    l.submit(&node, wallets.iter().map(|w| SignedTransaction::claim(w, chain, 0)).collect())
-        .unwrap();
+    l.submit(
+        &node,
+        wallets
+            .iter()
+            .map(|w| SignedTransaction::claim(w, chain, 0))
+            .collect(),
+    )
+    .unwrap();
     let mut funding = Vec::new();
     for (i, w) in wallets.iter().enumerate() {
         funding.push(SignedTransaction::transfer(
-            &creator,
-            chain,
-            i as u64,
-            w.address,
-            10_000_000,
+            &creator, chain, i as u64, w.address, 10_000_000,
         ));
     }
     l.submit(&node, funding).unwrap();

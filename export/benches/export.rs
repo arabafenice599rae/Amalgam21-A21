@@ -8,7 +8,9 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use std::path::PathBuf;
 use token_postquantum::{GenesisParams, Ledger, SignedTransaction, Wallet};
-use token_postquantum_export::{block_index, state_snapshot, verify_block_index, verify_state_snapshot};
+use token_postquantum_export::{
+    block_index, state_snapshot, verify_block_index, verify_state_snapshot,
+};
 
 fn seed(i: u64) -> [u8; 32] {
     let mut s = [0u8; 32];
