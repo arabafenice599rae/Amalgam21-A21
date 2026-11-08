@@ -102,6 +102,15 @@
 //          e nessuna spesa non reclamata è possibile (apply_block rifiuta il
 //          blocco intero). Per i conti INESISTENTI resta InvalidSignature
 //          (punto 3, accettato e documentato).
+//   10. CORREZIONE DI SICUREZZA (Claim→Transfer nello stesso blocco): il
+//       rinvio del punto 9(c) lasciava un varco: se un Claim nello stesso
+//       blocco registrava la vk di un mittente fin lì non reclamato, un
+//       Transfer successivo di quel mittente non era verificato da NESSUNA
+//       parte (pre-verifica rinviata, applicazione sequenziale senza
+//       verifica della firma) e poteva essere accettato con firma
+//       contraffatta. Ora apply_block registra l'insieme dei mittenti
+//       rinviati e verifica la firma contro la vk appena associata prima
+//       di ogni mutazione. Test: forged_transfer_after_claim_same_block_rejected.
 //
 // CHANGELOG v0.11 (revisione esterna della v0.10, correzioni chirurgiche):
 //   1. DEMO: i rami positivi dei controlli negativi terminano con panic!.
@@ -1330,6 +1339,28 @@ impl LedgerState {
             return Err(LedgerError::InvalidSignature);
         }
 
+        // CORREZIONE DI SICUREZZA (Claim→Transfer nello stesso blocco): la
+        // pre-verifica RINVIA i Transfer da mittenti esistenti ma NON ancora
+        // reclamati (vk registrata azzerata, firma non verificabile lì). Se
+        // un Claim precedente nello STESSO blocco registra la vk, un
+        // Transfer successivo di quel mittente non è mai stato verificato
+        // da nessuno. Qui si registra l'insieme dei mittenti rinviati; il
+        // ramo Transfer del ciclo sequenziale verifica la firma contro la
+        // vk registrata a quel punto (appena associata dal Claim) prima di
+        // ogni mutazione. Senza questo controllo, un Transfer contraffatto
+        // da un conto reclamato nello stesso blocco sarebbe accettato.
+        let deferred: std::collections::HashSet<Address> = h
+            .txs
+            .iter()
+            .filter_map(|tx| match &tx.core.action {
+                TxAction::Transfer { .. } => match self.accounts.get(&tx.core.from) {
+                    Some(a) if !a.claimed => Some(tx.core.from),
+                    _ => None,
+                },
+                _ => None,
+            })
+            .collect();
+
         // Valori di sola lettura copiati prima della chiusura mutante, così
         // l'applicazione tocca solo accounts/accounts_total/pool.
         let fee = self.genesis.params.fee;
@@ -1357,6 +1388,22 @@ impl LedgerState {
                             .ok_or(LedgerError::UnknownAccount(tx.core.from))?;
                         if !sender.claimed {
                             return Err(LedgerError::UnclaimedAccount(tx.core.from));
+                        }
+                        // Firma DIFFERITA: mittente non reclamato a inizio
+                        // blocco (pre-verifica rinviata) e reclamato da un
+                        // Claim precedente nello stesso blocco. La firma va
+                        // verificata ORA contro la vk appena registrata:
+                        // è l'unica occasione in cui la vk di questo conto
+                        // è nota e la firma non è ancora stata controllata.
+                        if deferred.contains(&tx.core.from)
+                            && !verify_signature(
+                                &sender.verification_key,
+                                &tx.canonical_bytes(),
+                                TX_CONTEXT,
+                                &tx.signature,
+                            )
+                        {
+                            return Err(LedgerError::InvalidSignature);
                         }
                         if tx.core.nonce != sender.nonce {
                             return Err(LedgerError::BadNonce {
@@ -2739,6 +2786,63 @@ mod tests {
         assert_eq!(l.state.balance(&alice.address), 100);
         assert_eq!(l.state.nonce(&alice.address), 1);
         assert_eq!(l.state.balance(&f.creator.address), 599_700);
+    }
+
+    #[test]
+    fn forged_transfer_after_claim_same_block_rejected() {
+        let f = fixture("claim-then-forged");
+        let alice = Wallet::from_seed(os_random::<SEED_SIZE>());
+        let mut l = Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator).unwrap();
+        let chain = l.state.genesis.genesis_hash;
+        // 1. Il creatore trasferisce fondi ad Alice: conto ESISTENTE ma NON
+        //    ancora reclamato (vk azzerata).
+        l.submit(
+            &f.node,
+            vec![SignedTransaction::transfer(
+                &f.creator,
+                chain,
+                0,
+                alice.address,
+                100,
+            )],
+        )
+        .unwrap();
+        let before = l.state.clone();
+        // 2. Nello STESSO blocco: Claim valido di Alice + Transfer con
+        //    nonce 1 e firma AZZERATA (contraffatta). Senza la correzione,
+        //    la pre-verifica rinvia il Transfer (mittente non reclamato a
+        //    inizio blocco), il Claim registra la vk e il Transfer passa
+        //    senza che nessuna firma sia mai stata verificata.
+        let claim = SignedTransaction::claim(&alice, chain, 0);
+        let mut forged =
+            SignedTransaction::transfer(&alice, chain, 1, f.creator.address, 50);
+        forged.signature = vec![0u8; SIG_SIZE];
+        match l.submit(&f.node, vec![claim, forged]) {
+            Err(LedgerError::InvalidSignature) => {}
+            other => panic!(
+                "attesa InvalidSignature, ottenuto {:?}",
+                other.map(|_| ())
+            ),
+        }
+        // 3. Il blocco è scartato per intero: lo stato resta byte-identico
+        //    (undo log) e nessun fondo è movimentato.
+        assert_eq!(l.state.accounts, before.accounts);
+        assert_eq!(l.state.accounts_total, before.accounts_total);
+        assert_eq!(l.state.height, before.height);
+        assert_eq!(l.state.blocks.len(), before.blocks.len());
+        assert_eq!(l.state.balance(&alice.address), 100);
+        // 4. Controllo positivo: lo stesso blocco con firma VALIDA è
+        //    accettato (il percorso Claim→Transfer legittimo non è rotto).
+        let claim = SignedTransaction::claim(&alice, chain, 0);
+        let ok = SignedTransaction::transfer(&alice, chain, 1, f.creator.address, 50);
+        l.submit(&f.node, vec![claim, ok]).unwrap();
+        // Alice: 100 (funding) + 100 (airdrop) - 50 - fee(10) + cashback(9).
+        assert_eq!(l.state.nonce(&alice.address), 2);
+        assert_eq!(
+            l.state.balance(&alice.address),
+            100 + f.params.airdrop_per_wallet - 50 - f.params.fee
+                + f.params.cashback_of_fee()
+        );
     }
 
     #[test]
