@@ -9,47 +9,124 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+permissions:
+  contents: write
+  issues: write
+
 jobs:
-  fmt:
-    name: rustfmt
+  fmt-check:
+    name: rustfmt (verifica)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
       - name: Verifica formato
         run: cargo fmt --all -- --check
 
+  fmt-fix:
+    name: rustfmt (autofix)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Formatta
+        run: cargo fmt --all
+      - name: Commit e push se vi sono modifiche
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "fmt: normalizzazione rustfmt [skip ci]"
+            git push
+          fi
+
   clippy:
     name: clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
       - uses: Swatinem/rust-cache@v2
       - name: Lint (warning come errori)
-        run: cargo clippy --workspace --all-targets -- -D warnings
+        shell: bash
+        run: |
+          set -o pipefail
+          cargo clippy --workspace --all-targets -- -D warnings 2>&1 | tee diag.log
+      - name: Report su issue di diagnostica
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          {
+            echo "## clippy — commit ${{ github.sha }}"
+            echo ""
+            echo '(`tail -n 150` dell'output completo; vedi i log della run per il dettaglio.)'
+            echo '~~~'
+            tail -n 150 diag.log
+            echo '~~~'
+          } > body.md
+          TITLE="CI: diagnostica compilazione"
+          NUM=$(gh api "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq '.[] | select(.title=="'"'$TITLE'"'"') | select(.pull_request==null) | .number' | head -n1)
+          if [ -z "$NUM" ]; then
+            gh issue create --title "$TITLE" --body "Issue tecnica aperta dalla CI: raccoglie errori di compilazione e lint per la correzione." > /dev/null
+            NUM=$(gh api "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq '.[] | select(.title=="'"'$TITLE'"'"') | select(.pull_request==null) | .number' | head -n1)
+          fi
+          gh issue comment "$NUM" --body-file body.md
 
   build-test:
     name: build e test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Build
-        run: cargo build --workspace --all-targets
+        shell: bash
+        run: |
+          set -o pipefail
+          cargo build --workspace --all-targets 2>&1 | tee diag.log
       - name: Test
-        run: cargo test --workspace
+        if: success()
+        shell: bash
+        run: |
+          set -o pipefail
+          cargo test --workspace 2>&1 | tee diag-test.log
+      - name: Report su issue di diagnostica
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          {
+            echo "## build e test — commit ${{ github.sha }}"
+            echo ""
+            echo '~~~'
+            tail -n 150 diag.log 2>/dev/null
+            tail -n 80 diag-test.log 2>/dev/null
+            echo '~~~'
+          } > body.md
+          TITLE="CI: diagnostica compilazione"
+          NUM=$(gh api "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq '.[] | select(.title=="'"'$TITLE'"'"') | select(.pull_request==null) | .number' | head -n1)
+          if [ -z "$NUM" ]; then
+            gh issue create --title "$TITLE" --body "Issue tecnica aperta dalla CI: raccoglie errori di compilazione e lint per la correzione." > /dev/null
+            NUM=$(gh api "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq '.[] | select(.title=="'"'$TITLE'"'"') | select(.pull_request==null) | .number' | head -n1)
+          fi
+          gh issue comment "$NUM" --body-file body.md
 
   audit:
     name: cargo-audit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
       - name: Installazione cargo-audit
         uses: taiki-e/install-action@v2
