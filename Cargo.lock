@@ -1442,7 +1442,7 @@ dependencies = [
 
 [[package]]
 name = "token-postquantum"
-version = "0.12.0"
+version = "0.13.0"
 dependencies = [
  "argon2",
  "borsh",
@@ -1450,6 +1450,7 @@ dependencies = [
  "chacha20poly1305",
  "criterion",
  "iai-callgrind",
+ "libc",
  "libcrux-ml-dsa",
  "proptest",
  "rand",
@@ -1460,7 +1461,7 @@ dependencies = [
 
 [[package]]
 name = "token-postquantum-export"
-version = "0.12.0"
+version = "0.13.0"
 dependencies = [
  "criterion",
  "proptest",
