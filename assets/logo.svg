@@ -1,100 +1,152 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240" role="img" aria-label="Amalgam21 logo">
+
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="1024" height="768"
+     viewBox="0 0 1024 768"
+     role="img"
+     aria-labelledby="title desc">
+
+  <title id="title">Amalgam21 - A21</title>
+  <desc id="desc">Logo A21 con rete geometrica blu e scritta ciano luminosa.</desc>
+
   <defs>
-    <filter id="softglow" x="-60%" y="-60%" width="220%" height="220%">
-      <feGaussianBlur stdDeviation="3" result="b"/>
+    <radialGradient id="background" cx="50%" cy="48%" r="75%">
+      <stop offset="0%" stop-color="#03091d"/>
+      <stop offset="100%" stop-color="#00000b"/>
+    </radialGradient>
+
+    <linearGradient id="network" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0759df"/>
+      <stop offset="50%" stop-color="#063a9d"/>
+      <stop offset="100%" stop-color="#087dff"/>
+    </linearGradient>
+
+    <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#35f5ff"/>
+      <stop offset="100%" stop-color="#00c8ff"/>
+    </linearGradient>
+
+    <filter id="blueGlow" x="-250%" y="-250%" width="600%" height="600%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
       <feMerge>
-        <feMergeNode in="b"/>
+        <feMergeNode in="blur"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
-    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#00E5FF" stop-opacity="0.16"/>
-      <stop offset="70%" stop-color="#00E5FF" stop-opacity="0.04"/>
-      <stop offset="100%" stop-color="#00E5FF" stop-opacity="0"/>
-    </radialGradient>
+
+    <filter id="cyanGlow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
   </defs>
 
-  <rect width="240" height="240" fill="#000000"/>
-  <rect width="240" height="240" fill="url(#halo)"/>
+  <!-- Background -->
+  <rect width="1024" height="768" fill="url(#background)"/>
 
-  <!-- reticolo: 18 nodi -->
-  <g stroke="#38BDF8" stroke-width="1.1" fill="none">
-    <!-- anello esterno -->
-    <line x1="120" y1="12"  x2="180" y2="48"/>
-    <line x1="180" y1="48"  x2="216" y2="108"/>
-    <line x1="216" y1="108" x2="180" y2="168"/>
-    <line x1="180" y1="168" x2="120" y2="204"/>
-    <line x1="120" y1="204" x2="72"  y2="168"/>
-    <line x1="72"  y1="168" x2="24"  y2="108"/>
-    <line x1="24"  y1="108" x2="60"  y2="48"/>
-    <line x1="60"  y1="48"  x2="96"  y2="12"/>
-    <line x1="96"  y1="12"  x2="120" y2="12"/>
-    <!-- incroci interni verso il nucleo -->
-    <line x1="120" y1="12"  x2="120" y2="120"/>
-    <line x1="216" y1="108" x2="120" y2="120"/>
-    <line x1="120" y1="204" x2="120" y2="120"/>
-    <line x1="24"  y1="108" x2="120" y2="120"/>
-    <line x1="180" y1="48"  x2="120" y2="120" opacity="0.6"/>
-    <line x1="180" y1="168" x2="120" y2="120" opacity="0.6"/>
-    <line x1="60"  y1="48"  x2="120" y2="120" opacity="0.6"/>
-    <line x1="72"  y1="168" x2="120" y2="120" opacity="0.6"/>
-    <line x1="96"  y1="12"  x2="144" y2="78"  opacity="0.45"/>
-    <line x1="216" y1="108" x2="144" y2="150" opacity="0.45"/>
-    <line x1="120" y1="204" x2="96"  y2="150" opacity="0.45"/>
-    <line x1="24"  y1="108" x2="96"  y2="78"  opacity="0.45"/>
-    <!-- anello interno -->
-    <line x1="120" y1="60"  x2="168" y2="84"/>
-    <line x1="168" y1="84"  x2="144" y2="150"/>
-    <line x1="144" y1="150" x2="96"  y2="150"/>
-    <line x1="96"  y1="150" x2="72"  y2="84"/>
-    <line x1="72"  y1="84"  x2="120" y2="60"/>
-    <!-- nodi intermedi -->
-    <line x1="150" y1="42"  x2="168" y2="84" opacity="0.4"/>
-    <line x1="192" y1="138" x2="144" y2="150" opacity="0.4"/>
-    <line x1="48"  y1="138" x2="96"  y2="150" opacity="0.4"/>
-    <line x1="90"  y1="42"  x2="72"  y2="84"  opacity="0.4"/>
-    <line x1="150" y1="42"  x2="120" y2="60"  opacity="0.4"/>
-    <line x1="90"  y1="42"  x2="120" y2="60"  opacity="0.4"/>
-    <line x1="192" y1="138" x2="168" y2="84"  opacity="0.4"/>
-    <line x1="48"  y1="138" x2="72"  y2="84"  opacity="0.4"/>
-    <!-- nodi interni verso il centro -->
-    <line x1="144" y1="78"  x2="120" y2="120" opacity="0.5"/>
-    <line x1="96"  y1="78"  x2="120" y2="120" opacity="0.5"/>
-    <line x1="144" y1="150" x2="120" y2="120" opacity="0.35"/>
-    <line x1="96"  y1="150" x2="120" y2="120" opacity="0.35"/>
+  <!-- Geometric network -->
+  <g fill="none"
+     stroke="url(#network)"
+     stroke-width="1.8"
+     opacity="0.56">
+
+    <path d="M513 130 L292 254 L292 514 L512 627 L734 514 L734 254 Z"/>
+
+    <path d="M513 130 L445 186 L362 250 L292 254"/>
+    <path d="M513 130 L512 196 L664 251 L734 254"/>
+
+    <path d="M292 254 L321 309 L289 352 L328 452 L292 514"/>
+    <path d="M734 254 L700 315 L707 421 L669 503 L734 514"/>
+
+    <path d="M362 250 L413 265 L512 196 L588 243 L664 251"/>
+    <path d="M321 309 L378 357 L328 452 L364 508 L456 580 L512 627"/>
+    <path d="M700 315 L644 356 L707 421 L669 503 L571 538 L512 627"/>
+
+    <path d="M292 514 L364 508 L512 557 L669 503 L734 514"/>
+
+    <path d="M445 186 L413 265 L378 357 L328 452"/>
+    <path d="M512 196 L548 286 L644 356 L707 421"/>
+
+    <path d="M362 250 L512 250 L664 251"/>
+    <path d="M321 309 L512 390 L700 315"/>
+    <path d="M289 352 L512 390 L707 421"/>
+    <path d="M328 452 L512 390 L669 503"/>
+    <path d="M364 508 L512 480 L669 503"/>
+
+    <path d="M413 265 L512 250 L588 243"/>
+    <path d="M378 357 L512 480 L571 538"/>
+    <path d="M548 286 L512 390 L512 557"/>
+    <path d="M456 580 L512 557 L571 538"/>
   </g>
 
-  <!-- nodi -->
-  <g fill="#7DD3FC">
-    <!-- anello esterno -->
-    <circle cx="120" cy="12"  r="5"/>
-    <circle cx="180" cy="48"  r="4.5"/>
-    <circle cx="216" cy="108" r="5"/>
-    <circle cx="180" cy="168" r="4.5"/>
-    <circle cx="120" cy="204" r="5"/>
-    <circle cx="72"  cy="168" r="4.5"/>
-    <circle cx="24"  cy="108" r="5"/>
-    <circle cx="60"  cy="48"  r="4.5"/>
-    <circle cx="96"  cy="12"  r="4.5"/>
-    <!-- intermedi -->
-    <circle cx="150" cy="42"  r="3.5" opacity="0.9"/>
-    <circle cx="192" cy="138" r="3.5" opacity="0.9"/>
-    <circle cx="48"  cy="138" r="3.5" opacity="0.9"/>
-    <circle cx="90"  cy="42"  r="3.5" opacity="0.9"/>
-    <!-- anello interno -->
-    <circle cx="120" cy="60"  r="4"/>
-    <circle cx="168" cy="84"  r="4"/>
-    <circle cx="144" cy="150" r="4" opacity="0.85"/>
-    <circle cx="96"  cy="150" r="4" opacity="0.85"/>
-    <circle cx="72"  cy="84"  r="4"/>
-    <!-- nodi in incrocio con alone -->
-    <circle cx="144" cy="78"  r="3.2" filter="url(#softglow)"/>
-    <circle cx="96"  cy="78"  r="3.2" filter="url(#softglow)"/>
+  <!-- Bright connections -->
+  <g fill="none"
+     stroke="#087bff"
+     stroke-width="2.2"
+     opacity="0.78">
+
+    <path d="M445 186 L362 250 L321 309"/>
+    <path d="M512 196 L445 314"/>
+    <path d="M664 251 L700 315"/>
+    <path d="M292 254 L328 452 L364 508"/>
+    <path d="M734 254 L707 421 L669 503"/>
+    <path d="M364 508 L512 627"/>
+    <path d="M512 557 L512 627"/>
   </g>
 
-  <!-- nucleo A21 -->
-  <g filter="url(#softglow)">
-    <text x="120" y="140" text-anchor="middle" font-family="Segoe UI, Helvetica, Arial, sans-serif"
-          font-size="60" font-weight="700" letter-spacing="2" fill="#00E5FF">A21</text>
+  <!-- Network nodes -->
+  <g filter="url(#blueGlow)">
+
+    <g fill="#087cff">
+      <circle cx="513" cy="130" r="10"/>
+      <circle cx="292" cy="254" r="10"/>
+      <circle cx="734" cy="254" r="10"/>
+      <circle cx="292" cy="514" r="10"/>
+      <circle cx="734" cy="514" r="10"/>
+      <circle cx="362" cy="250" r="9"/>
+      <circle cx="664" cy="251" r="8"/>
+      <circle cx="669" cy="503" r="8"/>
+    </g>
+
+    <g fill="#00cfff">
+      <circle cx="445" cy="186" r="7"/>
+      <circle cx="512" cy="196" r="9"/>
+      <circle cx="700" cy="315" r="8"/>
+      <circle cx="328" cy="452" r="8"/>
+      <circle cx="364" cy="508" r="8"/>
+      <circle cx="512" cy="557" r="8"/>
+      <circle cx="512" cy="627" r="10"/>
+    </g>
+
+    <g fill="#0860c8">
+      <circle cx="321" cy="309" r="7"/>
+      <circle cx="289" cy="352" r="6"/>
+      <circle cx="413" cy="265" r="6"/>
+      <circle cx="588" cy="243" r="4"/>
+      <circle cx="707" cy="421" r="7"/>
+      <circle cx="456" cy="580" r="7"/>
+      <circle cx="571" cy="538" r="4"/>
+    </g>
   </g>
+
+  <!-- Central A21 logo -->
+  <text x="512"
+        y="430"
+        text-anchor="middle"
+        font-family="Arial, Helvetica, sans-serif"
+        font-size="158"
+        font-weight="500"
+        letter-spacing="-8"
+        fill="url(#cyan)"
+        filter="url(#cyanGlow)">A21</text>
+
+  <!-- Stylized A accent -->
+  <path d="M400 418 L435 324 L466 324 L431 418"
+        fill="none"
+        stroke="#28efff"
+        stroke-width="7"
+        stroke-linecap="round"
+        opacity="0.95"/>
+
 </svg>
