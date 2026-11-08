@@ -138,7 +138,7 @@ use borsh::{BorshDeserialize, BorshSerialize};
 use chacha20poly1305::aead::{Aead, KeyInit, Payload};
 use chacha20poly1305::{XChaCha20Poly1305, XNonce};
 use libcrux_ml_dsa::ml_dsa_65;
-use rand::{rngs::OsRng, TryRngCore};
+use rand::{rngs::SysRng, TryRng};
 use sha3::digest::{ExtendableOutput, Update, XofReader};
 use sha3::Shake256;
 use std::collections::HashMap;
@@ -230,7 +230,7 @@ pub fn fmt_amount(units: u64) -> String {
 
 pub fn os_random<const L: usize>() -> [u8; L] {
     let mut buf = [0u8; L];
-    OsRng.try_fill_bytes(&mut buf).expect("entropia OS");
+    SysRng.try_fill_bytes(&mut buf).expect("entropia OS");
     buf
 }
 
@@ -368,7 +368,12 @@ impl Wallet {
     /// di sistema: nodo, creator e utenti hanno seed indipendenti.
     pub fn derive_child(master: &Seed, index: u32) -> Wallet {
         let child = pq_hash(&[DERIVE_DOMAIN, master, &index.to_le_bytes()]);
-        Wallet::from_seed(child)
+        // Truncamento deliberato a 32 byte (prima metà del digest Shake256-512):
+        // il seed ML-DSA-65 è 32 byte e la derivazione non deve ampliare
+        // l'entropia del master.
+        let mut seed = Seed::default();
+        seed.copy_from_slice(&child[..SEED_SIZE]);
+        Wallet::from_seed(seed)
     }
 
     pub fn sign(&self, message: &[u8], context: &[u8]) -> [u8; SIG_SIZE] {
