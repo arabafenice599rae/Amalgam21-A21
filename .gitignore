@@ -1,0 +1,8 @@
+/target
+/ledger-data
+/ledger-external
+/keys
+*.wallet
+*.log.bak
+*.anchor.bak
+.DS_Store
