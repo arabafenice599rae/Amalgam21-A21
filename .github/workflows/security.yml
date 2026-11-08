@@ -45,8 +45,11 @@ jobs:
         uses: taiki-e/install-action@v2
         with:
           tool: cargo-geiger
-      # Inventario del codice unsafe: informativo, non bloccante.
+      # Inventario del codice unsafe: informativo, non bloccante
+      # (cargo-geiger riporta statistiche e può terminare con codice
+      # non nullo anche quando l'inventario è completo).
       - name: Inventario unsafe
+        continue-on-error: true
         run: cargo geiger --workspace
 
   miri:
