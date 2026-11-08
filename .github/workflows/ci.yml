@@ -11,7 +11,6 @@ env:
 
 permissions:
   contents: write
-  issues: write
 
 jobs:
   fmt-check:
@@ -60,27 +59,24 @@ jobs:
         run: |
           set -o pipefail
           cargo clippy --workspace --all-targets -- -D warnings 2>&1 | tee diag.log
-      - name: Report su issue di diagnostica
+      - name: Pubblica diagnostica su ramo dati
         if: failure()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
         run: |
-          set -u
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          BRANCH="diag/clippy"
+          git switch -c "$BRANCH"
+          mkdir -p diag
           {
-            echo "## clippy — commit ${{ github.sha }}"
-            echo ""
-            echo '~~~'
-            tail -n 150 diag.log
-            echo '~~~'
-          } > body.md
-          TITLE="CI diagnostica compilazione"
-          NUM=$(gh api "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq ".[] | select(.title==\"\$TITLE\") | select(.pull_request==null) | .number" | head -n1)
-          if [ -z "$NUM" ]; then
-            URL=$(gh issue create --title "$TITLE" --body "Issue tecnica aperta dalla CI: raccoglie errori di compilazione e lint per la correzione.")
-            NUM="${URL##*/}"
-          fi
-          gh issue comment "$NUM" --body-file body.md
+            echo "commit: ${{ github.sha }}"
+            echo "job: ${{ github.job }}"
+            echo "run: ${{ github.run_id }}"
+            echo
+            tail -n 200 diag.log
+          } > "diag/clippy.log"
+          git add diag
+          git commit -m "diag: clippy @ ${{ github.sha }} [skip ci]"
+          git push origin "$BRANCH"
 
   build-test:
     name: build e test
@@ -100,27 +96,24 @@ jobs:
         run: |
           set -o pipefail
           cargo test --workspace 2>&1 | tee diag-test.log
-      - name: Report su issue di diagnostica
+      - name: Pubblica diagnostica su ramo dati
         if: failure()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
         run: |
-          set -u
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          BRANCH="diag/build-test"
+          git switch -c "$BRANCH"
+          mkdir -p diag
           {
-            echo "## build e test — commit ${{ github.sha }}"
-            echo ""
-            echo '~~~'
-            tail -n 150 diag.log 2>/dev/null; tail -n 80 diag-test.log 2>/dev/null
-            echo '~~~'
-          } > body.md
-          TITLE="CI diagnostica compilazione"
-          NUM=$(gh api "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq ".[] | select(.title==\"\$TITLE\") | select(.pull_request==null) | .number" | head -n1)
-          if [ -z "$NUM" ]; then
-            URL=$(gh issue create --title "$TITLE" --body "Issue tecnica aperta dalla CI: raccoglie errori di compilazione e lint per la correzione.")
-            NUM="${URL##*/}"
-          fi
-          gh issue comment "$NUM" --body-file body.md
+            echo "commit: ${{ github.sha }}"
+            echo "job: ${{ github.job }}"
+            echo "run: ${{ github.run_id }}"
+            echo
+            tail -n 200 diag.log 2>/dev/null; echo ----; tail -n 100 diag-test.log 2>/dev/null
+          } > "diag/build-test.log"
+          git add diag
+          git commit -m "diag: build-test @ ${{ github.sha }} [skip ci]"
+          git push origin "$BRANCH"
 
   audit:
     name: cargo-audit
