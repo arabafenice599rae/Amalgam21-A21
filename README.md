@@ -1,35 +1,80 @@
 # Amalgam21 Token (A21)
 
-Token digitale proprietario post-quantum: firme ML-DSA-65 (FIPS 204, livello 3 NIST),
-hash SHAKE256 a 512 bit, ledger autoritario a firmatario unico, wallet non-custodial
-(Argon2id + XChaCha20-Poly1305).
+**A proprietary post-quantum digital token.**
 
-## Struttura del workspace
+[![CI](https://github.com/arabafenice599rae/Amalgam21-A21/actions/workflows/ci.yml/badge.svg)](https://github.com/arabafenice599rae/Amalgam21-A21/actions/workflows/ci.yml)
+[![Made with Rust](https://img.shields.io/badge/rust-stable-orange)](https://www.rust-lang.org)
+[![Audit](https://img.shields.io/badge/cargo--audit-passing-brightgreen)](https://github.com/rustsec/rustsec)
 
-- core/ — crate token-postquantum: nucleo del ledger (formati, wallet, conti, blocchi,
-  anchor, journal, facciata ERC-20-like) e demo end-to-end.
-- export/ — crate token-postquantum-export: snapshot JSON dei saldi e indice JSONL
-  dei blocchi per explorer e indexer; vista derivata, non autoritativa.
+---
 
-## Comandi
+## Overview
 
-    cargo build --workspace
-    cargo test --workspace
-    cargo run -p token-postquantum   # demo interattiva (passphrase via prompt)
+Amalgam21 (A21) is a post-quantum digital ledger with the following core properties:
 
-## CI (GitHub Actions)
+- **Signatures** — ML-DSA-65 (FIPS 204, NIST security level 3)
+- **Hashing** — SHAKE256 at 512-bit output
+- **Ledger** — authoritative, single-signer consensus
+- **Wallet** — non-custodial, encrypted with Argon2id key derivation + XChaCha20-Poly1305 AEAD
 
-A ogni push e pull request: cargo fmt --check, cargo clippy -D warnings, build, test
-e cargo audit (vulnerabilita' note delle dipendenze). I controlli sono job separati:
-il fallimento di uno non nasconde gli esiti degli altri.
+## Workspace Structure
 
-## Modello dichiarato
+| Crate | Purpose |
+|-------|---------|
+| `core/` (`token-postquantum`) | The token core: binary formats, wallet, accounts, blocks, anchor, journal, and an ERC-20-like facade, plus an end-to-end interactive demo |
+| `export/` (`token-postquantum-export`) | Derived, non-authoritative views for explorers and indexers: JSON balance snapshots and a JSONL block index |
 
-- Supply 100M token, 6 decimali; importi in unita' intere u64, mai virgola mobile.
-- Fee fissa, intera, al conto di sistema; cashback 90% dal pool dedicato.
-- Nessun formato binario cambia dalla v0.8.
-- Dichiarazioni di sicurezza e limitazioni: intestazioni dei sorgenti.
+## Getting Started
 
-## Licenza
+### Prerequisites
 
-Copyright Amalgam21. Tutti i diritti riservati. Nessuna licenza d'uso concessa.
+- Rust (stable toolchain)
+
+### Build
+
+```bash
+cargo build --workspace
+```
+
+### Test
+
+```bash
+cargo test --workspace
+```
+
+### Run the Demo
+
+```bash
+cargo run -p token-postquantum   # interactive demo (passphrase via prompt)
+```
+
+## Continuous Integration
+
+Every push and pull request runs five independent checks:
+
+| Check | Description |
+|-------|-------------|
+| `cargo fmt --check` | Consistent code formatting |
+| `cargo clippy -D warnings` | Zero lints; every warning is an error |
+| Build | Clean compilation of the full workspace |
+| Tests | Full test suite |
+| `cargo audit` | No known vulnerabilities in dependencies |
+
+Each check runs as a separate job: the failure of one check never hides the outcome of the others.
+
+## Token Model
+
+| Property | Value |
+|----------|-------|
+| Total supply | 100,000,000 A21 |
+| Decimals | 6 |
+| Amount representation | Integer `u64` units — floating point is never used |
+| Fees | Fixed integer fee to the system account |
+| Cashback | 90% of fees, paid from a dedicated pool |
+| Binary formats | Unchanged since v0.8 |
+
+Security declarations and known limitations are documented in the source file headers.
+
+## License
+
+Copyright Amalgam21. All rights reserved. No license of use is granted.
