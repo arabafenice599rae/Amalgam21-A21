@@ -552,6 +552,9 @@ fn verify_signature(vk: &[u8; VK_SIZE], msg: &[u8], context: &[u8], sig: &[u8]) 
 // Transazioni: Transfer e Claim, entrambe firmate ML-DSA-65 dal mittente
 // ---------------------------------------------------------------------------
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug)]
+// La variante Claim contiene una vk ML-DSA-65 (1952 byte): il boxing cambierebbe
+// la semantica di copia del tipo; dimensioni accettate per stabilita' del formato.
+#[allow(clippy::large_enum_variant)]
 pub enum TxAction {
     Transfer {
         to: Address,
@@ -743,6 +746,9 @@ impl GenesisRecord {
 }
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug)]
+// GenesisRecord e' intenzionalmente inline: il boxing non e' applicato per non
+// alterare la semantica del tipo; dimensioni accettate.
+#[allow(clippy::large_enum_variant)]
 pub enum Record {
     Genesis(GenesisRecord),
     Block(Block),
@@ -1280,7 +1286,7 @@ impl LedgerState {
         if threads <= 1 {
             return txs.iter().all(|tx| self.tx_signature_valid(tx));
         }
-        let chunk = (n + threads - 1) / threads;
+        let chunk = n.div_ceil(threads);
         std::thread::scope(|s| {
             let mut handles = Vec::new();
             for part in txs.chunks(chunk) {
@@ -1761,7 +1767,7 @@ impl Ledger {
                 at_record: idx,
                 reason: "record non deserializzabile o byte residui".into(),
             })?;
-            let seed = prev_hash.unwrap_or_else(|| match &rec {
+            let seed = prev_hash.unwrap_or(match &rec {
                 Record::Genesis(g) => g.genesis_hash,
                 Record::Block(_) => [0u8; HASH_SIZE],
             });
@@ -2498,7 +2504,7 @@ mod tests {
         {
             let mut jf = OpenOptions::new()
                 .append(true)
-                .open(&f.ext.join("anchor-journal.log"))
+                .open(f.ext.join("anchor-journal.log"))
                 .unwrap();
             jf.write_all(&[0xAB, 0xCD, 0x00]).unwrap();
         }
@@ -2551,7 +2557,7 @@ mod tests {
             nonce: &[0u8; 24],
             ciphertext: &[0u8; SEED_SIZE + 16],
         };
-        fs::write(&path, &borsh::to_vec(&file).unwrap()).unwrap();
+        fs::write(&path, borsh::to_vec(&file).unwrap()).unwrap();
         match Wallet::load_encrypted(&path, b"pass") {
             Err(msg) => assert!(
                 msg.contains("limiti"),
