@@ -339,7 +339,9 @@ pub fn verify_block_index(index: &str) -> bool {
 mod tests {
     use super::*;
     use std::path::PathBuf;
-    use token_postquantum::{GenesisParams, Ledger, SignedTransaction, Wallet, SEED_SIZE, os_random};
+    use token_postquantum::{
+        os_random, GenesisParams, Ledger, SignedTransaction, Wallet, SEED_SIZE,
+    };
 
     struct Fixture {
         data: PathBuf,
@@ -388,8 +390,19 @@ mod tests {
         let carol = Wallet::from_seed(os_random::<SEED_SIZE>());
         let mut l = Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator).unwrap();
         let chain = l.state.genesis.genesis_hash;
-        l.submit(&f.node, vec![SignedTransaction::claim(&carol, chain, 0)]).unwrap();
-        l.submit(&f.node, vec![SignedTransaction::transfer(&f.creator, chain, 0, carol.address, 500)]).unwrap();
+        l.submit(&f.node, vec![SignedTransaction::claim(&carol, chain, 0)])
+            .unwrap();
+        l.submit(
+            &f.node,
+            vec![SignedTransaction::transfer(
+                &f.creator,
+                chain,
+                0,
+                carol.address,
+                500,
+            )],
+        )
+        .unwrap();
 
         // DETERMINISMO: due esportazioni dello stesso stato sono identiche.
         let s1 = state_snapshot(&l.state);
@@ -434,8 +447,19 @@ mod tests {
         let carol = Wallet::from_seed(os_random::<SEED_SIZE>());
         let mut l = Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator).unwrap();
         let chain = l.state.genesis.genesis_hash;
-        l.submit(&f.node, vec![SignedTransaction::claim(&carol, chain, 0)]).unwrap();
-        l.submit(&f.node, vec![SignedTransaction::transfer(&f.creator, chain, 0, carol.address, 500)]).unwrap();
+        l.submit(&f.node, vec![SignedTransaction::claim(&carol, chain, 0)])
+            .unwrap();
+        l.submit(
+            &f.node,
+            vec![SignedTransaction::transfer(
+                &f.creator,
+                chain,
+                0,
+                carol.address,
+                500,
+            )],
+        )
+        .unwrap();
 
         let idx = block_index(&l.state);
         let lines: Vec<&str> = idx.lines().collect();
@@ -467,8 +491,19 @@ mod tests {
         let carol = Wallet::from_seed(os_random::<SEED_SIZE>());
         let mut l = Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator).unwrap();
         let chain = l.state.genesis.genesis_hash;
-        l.submit(&f.node, vec![SignedTransaction::claim(&carol, chain, 0)]).unwrap();
-        l.submit(&f.node, vec![SignedTransaction::transfer(&f.creator, chain, 0, carol.address, 500)]).unwrap();
+        l.submit(&f.node, vec![SignedTransaction::claim(&carol, chain, 0)])
+            .unwrap();
+        l.submit(
+            &f.node,
+            vec![SignedTransaction::transfer(
+                &f.creator,
+                chain,
+                0,
+                carol.address,
+                500,
+            )],
+        )
+        .unwrap();
         let snap_before = state_snapshot(&l.state);
         let idx_before = block_index(&l.state);
         drop(l);
@@ -486,8 +521,19 @@ mod tests {
         let carol = Wallet::from_seed(os_random::<SEED_SIZE>());
         let mut l = Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator).unwrap();
         let chain = l.state.genesis.genesis_hash;
-        l.submit(&f.node, vec![SignedTransaction::claim(&carol, chain, 0)]).unwrap();
-        l.submit(&f.node, vec![SignedTransaction::transfer(&f.creator, chain, 0, carol.address, 500)]).unwrap();
+        l.submit(&f.node, vec![SignedTransaction::claim(&carol, chain, 0)])
+            .unwrap();
+        l.submit(
+            &f.node,
+            vec![SignedTransaction::transfer(
+                &f.creator,
+                chain,
+                0,
+                carol.address,
+                500,
+            )],
+        )
+        .unwrap();
 
         // Ricalcolo del digest: i documenti originali verificano.
         let snap = state_snapshot(&l.state);

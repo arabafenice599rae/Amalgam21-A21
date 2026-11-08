@@ -297,10 +297,14 @@ impl GenesisParams {
             });
         }
         if self.fee == 0 {
-            return Err(LedgerError::ConfigMismatch { reason: "fee nulla non ammessa".into() });
+            return Err(LedgerError::ConfigMismatch {
+                reason: "fee nulla non ammessa".into(),
+            });
         }
         if self.cashback_bps > 10_000 {
-            return Err(LedgerError::ConfigMismatch { reason: "cashback oltre il 100% della fee".into() });
+            return Err(LedgerError::ConfigMismatch {
+                reason: "cashback oltre il 100% della fee".into(),
+            });
         }
         Ok(())
     }
@@ -398,8 +402,13 @@ impl Wallet {
         let key = argon2_key(passphrase, &salt, ARGON2_M_KIB, ARGON2_T, ARGON2_P);
         let cipher = XChaCha20Poly1305::new(key.as_ref().into());
         let ct = cipher
-            .encrypt(XNonce::from_slice(&nonce), Payload::from(self.seed.as_ref()))
-            .map_err(|_| std::io::Error::new(std::io::ErrorKind::InvalidInput, "cifratura fallita"))?;
+            .encrypt(
+                XNonce::from_slice(&nonce),
+                Payload::from(self.seed.as_ref()),
+            )
+            .map_err(|_| {
+                std::io::Error::new(std::io::ErrorKind::InvalidInput, "cifratura fallita")
+            })?;
         let file = WalletFile {
             magic: WALLET_MAGIC,
             version: WALLET_VERSION,
@@ -454,7 +463,10 @@ impl Wallet {
         let key = argon2_key(passphrase, &f.salt, f.kdf_m_kib, f.kdf_t, f.kdf_p);
         let cipher = XChaCha20Poly1305::new(key.as_ref().into());
         let seed = cipher
-            .decrypt(XNonce::from_slice(&f.nonce), Payload::from(f.ciphertext.as_ref()))
+            .decrypt(
+                XNonce::from_slice(&f.nonce),
+                Payload::from(f.ciphertext.as_ref()),
+            )
             .map_err(|_| "passphrase errata o wallet manomesso".to_string())?;
         if seed.len() != SEED_SIZE {
             return Err("seed di lunghezza errata".into());
@@ -469,7 +481,13 @@ const ARGON2_M_KIB: u32 = 65536; // 64 MiB
 const ARGON2_T: u32 = 3;
 const ARGON2_P: u32 = 4;
 
-fn argon2_key(passphrase: &[u8], salt: &[u8; 16], m_kib: u32, t: u32, p: u32) -> Zeroizing<[u8; 32]> {
+fn argon2_key(
+    passphrase: &[u8],
+    salt: &[u8; 16],
+    m_kib: u32,
+    t: u32,
+    p: u32,
+) -> Zeroizing<[u8; 32]> {
     use argon2::{Algorithm, Argon2, Params, Version};
     let params = Params::new(m_kib, t, p, Some(32)).expect("parametri Argon2id validi");
     let mut key = Zeroizing::new([0u8; 32]);
@@ -496,8 +514,12 @@ pub fn encode_address(addr: &Address) -> String {
 /// Decodifica e VERIFICA della codifica pubblica: prefisso, alfabeto,
 /// lunghezza e checksum. Restituisce l'address binario.
 pub fn decode_address(encoded: &str) -> Result<Address, String> {
-    let body = encoded.strip_prefix("amg1").ok_or("prefisso 'amg1' mancante")?;
-    let payload = bs58::decode(body).into_vec().map_err(|_| "base58 non valido")?;
+    let body = encoded
+        .strip_prefix("amg1")
+        .ok_or("prefisso 'amg1' mancante")?;
+    let payload = bs58::decode(body)
+        .into_vec()
+        .map_err(|_| "base58 non valido")?;
     if payload.len() != HASH_SIZE + 4 {
         return Err("lunghezza del payload errata".into());
     }
@@ -526,11 +548,16 @@ fn verify_signature(vk: &[u8; VK_SIZE], msg: &[u8], context: &[u8], sig: &[u8]) 
 // ---------------------------------------------------------------------------
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug)]
 pub enum TxAction {
-    Transfer { to: Address, amount: u64 },
+    Transfer {
+        to: Address,
+        amount: u64,
+    },
     /// Reclamo del conto: crea il conto se NON esiste (saldo 0, nonce 0);
     /// altrimenti lo vincola alla chiave. In ogni caso prova che il mittente
     /// possiede la chiave privata la cui vk genera esattamente `from`.
-    Claim { verification_key: [u8; VK_SIZE] },
+    Claim {
+        verification_key: [u8; VK_SIZE],
+    },
 }
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug)]
@@ -549,7 +576,12 @@ pub struct SignedTransaction {
 
 impl SignedTransaction {
     fn create(wallet: &Wallet, chain: Hash, nonce: u64, action: TxAction) -> Self {
-        let core = TxCore { chain, from: wallet.address, nonce, action };
+        let core = TxCore {
+            chain,
+            from: wallet.address,
+            nonce,
+            action,
+        };
         let canonical = borsh::to_vec(&core).expect("serializzazione infallibile");
         let signature = wallet.sign(&canonical, TX_CONTEXT).to_vec();
         SignedTransaction { core, signature }
@@ -560,7 +592,14 @@ impl SignedTransaction {
     }
 
     pub fn claim(wallet: &Wallet, chain: Hash, nonce: u64) -> Self {
-        Self::create(wallet, chain, nonce, TxAction::Claim { verification_key: wallet.verification_key })
+        Self::create(
+            wallet,
+            chain,
+            nonce,
+            TxAction::Claim {
+                verification_key: wallet.verification_key,
+            },
+        )
     }
 
     fn canonical_bytes(&self) -> Vec<u8> {
@@ -587,12 +626,27 @@ pub struct Block {
 }
 
 impl Block {
-    fn build(chain: Hash, height: u64, prev_block_hash: Hash, txs: Vec<SignedTransaction>, node: &Wallet) -> Self {
-        let header = BlockHeader { chain, height, prev_block_hash, txs };
+    fn build(
+        chain: Hash,
+        height: u64,
+        prev_block_hash: Hash,
+        txs: Vec<SignedTransaction>,
+        node: &Wallet,
+    ) -> Self {
+        let header = BlockHeader {
+            chain,
+            height,
+            prev_block_hash,
+            txs,
+        };
         let canonical = borsh::to_vec(&header).expect("serializzazione infallibile");
         let block_hash = pq_hash(&[b"AMG2.BLOCK", &canonical]);
         let proposer_signature = node.sign(&canonical, BLOCK_CONTEXT).to_vec();
-        Block { header, block_hash, proposer_signature }
+        Block {
+            header,
+            block_hash,
+            proposer_signature,
+        }
     }
 
     /// Verifica COMPLETA: hash ricomputato dall'header canonico E firma
@@ -654,12 +708,19 @@ impl GenesisRecord {
             creator_vk: creator.verification_key,
             genesis_signature: Vec::new(),
         };
-        rec.genesis_signature = node.sign(&rec.canonical_bytes(), GENESIS_SIGN_CONTEXT).to_vec();
+        rec.genesis_signature = node
+            .sign(&rec.canonical_bytes(), GENESIS_SIGN_CONTEXT)
+            .to_vec();
         rec
     }
 
     fn verify_signature(&self) -> bool {
-        verify_signature(&self.node_vk, &self.canonical_bytes(), GENESIS_SIGN_CONTEXT, &self.genesis_signature)
+        verify_signature(
+            &self.node_vk,
+            &self.canonical_bytes(),
+            GENESIS_SIGN_CONTEXT,
+            &self.genesis_signature,
+        )
     }
 
     /// Rifiuta la collisione tra il conto del creatore e il conto di
@@ -733,7 +794,11 @@ struct JournalScan {
 }
 
 impl JournalScan {
-    const EMPTY: Self = JournalScan { last: None, valid_len: 0, entries: 0 };
+    const EMPTY: Self = JournalScan {
+        last: None,
+        valid_len: 0,
+        entries: 0,
+    };
 }
 
 impl AnchorJournal {
@@ -755,11 +820,15 @@ impl AnchorJournal {
         let scan = self.scan(&node.verification_key, &payload.genesis_hash)?;
         if let Some((h, tip)) = scan.last {
             if payload.height < h {
-                return Err(io_err("publish rifiutato: altezza inferiore all'ultima pubblicata"));
+                return Err(io_err(
+                    "publish rifiutato: altezza inferiore all'ultima pubblicata",
+                ));
             }
             if payload.height == h {
                 if payload.tip_record_hash != tip {
-                    return Err(io_err("publish rifiutato: tip differente alla stessa altezza"));
+                    return Err(io_err(
+                        "publish rifiutato: tip differente alla stessa altezza",
+                    ));
                 }
                 return Ok(false); // già pubblicato: idempotente
             }
@@ -770,7 +839,9 @@ impl AnchorJournal {
         // CONTA l'header di 12 byte (off-by-12 corretto in v0.8).
         let header_len: u64 = if scan.valid_len == 0 { 12 } else { 0 };
         if (scan.valid_len as u64) + header_len + 4 + (bytes.len() as u64) > MAX_JOURNAL_BYTES {
-            return Err(io_err("append rifiutato: journal oltre il limite di dimensione"));
+            return Err(io_err(
+                "append rifiutato: journal oltre il limite di dimensione",
+            ));
         }
         if scan.entries + 1 > MAX_JOURNAL_ENTRIES {
             return Err(io_err("append rifiutato: journal oltre il limite di voci"));
@@ -806,7 +877,11 @@ impl AnchorJournal {
     }
 
     /// Ultimo anchor pubblicato (vedi scan).
-    fn read_last(&self, node_vk: &[u8; VK_SIZE], genesis_hash: &Hash) -> Result<Option<(u64, Hash)>, std::io::Error> {
+    fn read_last(
+        &self,
+        node_vk: &[u8; VK_SIZE],
+        genesis_hash: &Hash,
+    ) -> Result<Option<(u64, Hash)>, std::io::Error> {
         Ok(self.scan(node_vk, genesis_hash)?.last)
     }
 
@@ -818,7 +893,11 @@ impl AnchorJournal {
     ///    bloccante;
     ///  - una VOCE INCOMPLETA finale è ignorata (crash durante l'append);
     ///    una voce completa ma invalida è errore bloccante.
-    fn scan(&self, node_vk: &[u8; VK_SIZE], genesis_hash: &Hash) -> Result<JournalScan, std::io::Error> {
+    fn scan(
+        &self,
+        node_vk: &[u8; VK_SIZE],
+        genesis_hash: &Hash,
+    ) -> Result<JournalScan, std::io::Error> {
         let io_err = |m: &str| std::io::Error::new(std::io::ErrorKind::InvalidData, m);
         if !self.path.exists() {
             return Ok(JournalScan::EMPTY);
@@ -838,7 +917,11 @@ impl AnchorJournal {
         if version != JOURNAL_VERSION {
             return Err(io_err("versione journal non supportata"));
         }
-        let mut scan = JournalScan { last: None, valid_len: 12, entries: 0 };
+        let mut scan = JournalScan {
+            last: None,
+            valid_len: 12,
+            entries: 0,
+        };
         let mut pos = 12usize;
         let mut pending_duplicate = false;
         while pos < raw.len() {
@@ -853,7 +936,8 @@ impl AnchorJournal {
                 break; // voce finale incompleta (crash): ignorata
             }
             let entry = &raw[pos + 4..pos + 4 + len];
-            let file: AnchorFile = borsh_exact(entry).map_err(|_| io_err("voce journal non deserializzabile"))?;
+            let file: AnchorFile =
+                borsh_exact(entry).map_err(|_| io_err("voce journal non deserializzabile"))?;
             if !file.verify(node_vk) {
                 return Err(io_err("firma di una voce del journal non valida"));
             }
@@ -903,19 +987,37 @@ impl AnchorJournal {
 pub enum LedgerError {
     UnknownAccount(Address),
     UnclaimedAccount(Address),
-    InsufficientBalance { who: Address, requested: u64, available: u64 },
-    BadNonce { expected: u64, got: u64 },
+    InsufficientBalance {
+        who: Address,
+        requested: u64,
+        available: u64,
+    },
+    BadNonce {
+        expected: u64,
+        got: u64,
+    },
     ZeroAmount,
     EmptyBlock,
     Overflow,
     InvalidSignature,
     SupplyInvariantBroken,
     ChainMismatch,
-    ConfigMismatch { reason: String },
-    MissingAnchor { source: &'static str },
+    ConfigMismatch {
+        reason: String,
+    },
+    MissingAnchor {
+        source: &'static str,
+    },
     NotOperative,
-    TamperDetected { at_record: u64, reason: String },
-    RollbackDetected { anchor_height: u64, log_height: u64, source: &'static str },
+    TamperDetected {
+        at_record: u64,
+        reason: String,
+    },
+    RollbackDetected {
+        anchor_height: u64,
+        log_height: u64,
+        source: &'static str,
+    },
     Io(std::io::Error),
 }
 
@@ -930,13 +1032,31 @@ impl std::fmt::Display for LedgerError {
         match self {
             LedgerError::UnknownAccount(a) => write!(f, "conto sconosciuto {}", encode_address(a)),
             LedgerError::UnclaimedAccount(a) => {
-                write!(f, "conto {} non reclamato: serve una transazione Claim firmata", encode_address(a))
+                write!(
+                    f,
+                    "conto {} non reclamato: serve una transazione Claim firmata",
+                    encode_address(a)
+                )
             }
-            LedgerError::InsufficientBalance { who, requested, available } => {
-                write!(f, "saldo insufficiente per {}: richiesto {}, disponibile {}", encode_address(who), requested, available)
+            LedgerError::InsufficientBalance {
+                who,
+                requested,
+                available,
+            } => {
+                write!(
+                    f,
+                    "saldo insufficiente per {}: richiesto {}, disponibile {}",
+                    encode_address(who),
+                    requested,
+                    available
+                )
             }
             LedgerError::BadNonce { expected, got } => {
-                write!(f, "nonce non valido: atteso {}, ricevuto {} (replay/doppia spesa)", expected, got)
+                write!(
+                    f,
+                    "nonce non valido: atteso {}, ricevuto {} (replay/doppia spesa)",
+                    expected, got
+                )
             }
             LedgerError::ZeroAmount => write!(f, "importo nullo o operazione vuota non ammessa"),
             LedgerError::EmptyBlock => write!(f, "nessuna transazione da includere nel blocco"),
@@ -945,17 +1065,38 @@ impl std::fmt::Display for LedgerError {
             LedgerError::SupplyInvariantBroken => write!(f, "invariante di offerta totale violata"),
             LedgerError::ChainMismatch => write!(f, "chain id non corrispondente"),
             LedgerError::ConfigMismatch { reason } => {
-                write!(f, "configurazione richiesta non corrisponde al ledger su disco: {}", reason)
+                write!(
+                    f,
+                    "configurazione richiesta non corrisponde al ledger su disco: {}",
+                    reason
+                )
             }
-            LedgerError::MissingAnchor { source } => write!(f, "anchor {} mancante: rifiuto bloccante", source),
+            LedgerError::MissingAnchor { source } => {
+                write!(f, "anchor {} mancante: rifiuto bloccante", source)
+            }
             LedgerError::NotOperative => {
-                write!(f, "ledger non operativo dopo un errore di persistenza: riaprire il ledger")
+                write!(
+                    f,
+                    "ledger non operativo dopo un errore di persistenza: riaprire il ledger"
+                )
             }
             LedgerError::TamperDetected { at_record, reason } => {
-                write!(f, "manomissione rilevata (record {}): {}", at_record, reason)
+                write!(
+                    f,
+                    "manomissione rilevata (record {}): {}",
+                    at_record, reason
+                )
             }
-            LedgerError::RollbackDetected { anchor_height, log_height, source } => {
-                write!(f, "rollback rilevato (anchor {} a quota {} vs log a quota {})", source, anchor_height, log_height)
+            LedgerError::RollbackDetected {
+                anchor_height,
+                log_height,
+                source,
+            } => {
+                write!(
+                    f,
+                    "rollback rilevato (anchor {} a quota {} vs log a quota {})",
+                    source, anchor_height, log_height
+                )
             }
             LedgerError::Io(e) => write!(f, "errore I/O: {}", e),
         }
@@ -1099,7 +1240,9 @@ impl LedgerState {
                 // spesa non reclamata può passare: apply_block rifiuta il
                 // blocco intero (all-or-nothing).
                 Some(a) if !a.claimed => true,
-                Some(a) => verify_signature(&a.verification_key, &canonical, TX_CONTEXT, &tx.signature),
+                Some(a) => {
+                    verify_signature(&a.verification_key, &canonical, TX_CONTEXT, &tx.signature)
+                }
                 None => false,
             },
             TxAction::Claim { verification_key } => {
@@ -1156,7 +1299,10 @@ impl LedgerState {
         }
         let next_height = self.height.checked_add(1).ok_or(LedgerError::Overflow)?;
         if h.height != next_height || h.prev_block_hash != self.tip_block_hash {
-            return Err(LedgerError::TamperDetected { at_record: h.height, reason: "catena non continua".into() });
+            return Err(LedgerError::TamperDetected {
+                at_record: h.height,
+                reason: "catena non continua".into(),
+            });
         }
         // Pre-verifica firme: una firma non valida invalida il blocco INTERO,
         // come nella semantica precedente (staging atomico).
@@ -1191,7 +1337,10 @@ impl LedgerState {
                             return Err(LedgerError::UnclaimedAccount(tx.core.from));
                         }
                         if tx.core.nonce != sender.nonce {
-                            return Err(LedgerError::BadNonce { expected: sender.nonce, got: tx.core.nonce });
+                            return Err(LedgerError::BadNonce {
+                                expected: sender.nonce,
+                                got: tx.core.nonce,
+                            });
                         }
                         if *amount == 0 || tx.core.from == *to {
                             return Err(LedgerError::ZeroAmount);
@@ -1210,9 +1359,15 @@ impl LedgerState {
                         let cashback = cashback_full.min(state.cashback_pool);
                         snapshot_account(&mut undo, &mut state.accounts, &tx.core.from);
                         let sender = state.accounts.get_mut(&tx.core.from).expect("presente");
-                        sender.balance = sender.balance.checked_sub(debit).ok_or(LedgerError::Overflow)?;
+                        sender.balance = sender
+                            .balance
+                            .checked_sub(debit)
+                            .ok_or(LedgerError::Overflow)?;
                         sender.nonce = sender.nonce.checked_add(1).ok_or(LedgerError::Overflow)?;
-                        sender.balance = sender.balance.checked_add(cashback).ok_or(LedgerError::Overflow)?;
+                        sender.balance = sender
+                            .balance
+                            .checked_add(cashback)
+                            .ok_or(LedgerError::Overflow)?;
                         state.accounts_total = state
                             .accounts_total
                             .checked_sub(debit as u128)
@@ -1270,7 +1425,10 @@ impl LedgerState {
                                 // Conto esistente: nonce corrente e nessun
                                 // secondo claim con chiave diversa.
                                 if tx.core.nonce != a.nonce {
-                                    return Err(LedgerError::BadNonce { expected: a.nonce, got: tx.core.nonce });
+                                    return Err(LedgerError::BadNonce {
+                                        expected: a.nonce,
+                                        got: tx.core.nonce,
+                                    });
                                 }
                                 if a.claimed && a.verification_key != *verification_key {
                                     return Err(LedgerError::InvalidSignature);
@@ -1280,7 +1438,10 @@ impl LedgerState {
                                 // Conto INESISTENTE: il Claim lo crea (saldo 0);
                                 // il primo nonce di un conto nuovo è 0.
                                 if tx.core.nonce != 0 {
-                                    return Err(LedgerError::BadNonce { expected: 0, got: tx.core.nonce });
+                                    return Err(LedgerError::BadNonce {
+                                        expected: 0,
+                                        got: tx.core.nonce,
+                                    });
                                 }
                             }
                         }
@@ -1290,15 +1451,20 @@ impl LedgerState {
                             .map(|a| a.claimed)
                             .unwrap_or(false);
                         snapshot_account(&mut undo, &mut state.accounts, &tx.core.from);
-                        let account = state.accounts.entry(tx.core.from).or_insert_with(|| Account {
-                            balance: 0,
-                            nonce: 0,
-                            verification_key: [0u8; VK_SIZE],
-                            claimed: false,
-                        });
+                        let account =
+                            state
+                                .accounts
+                                .entry(tx.core.from)
+                                .or_insert_with(|| Account {
+                                    balance: 0,
+                                    nonce: 0,
+                                    verification_key: [0u8; VK_SIZE],
+                                    claimed: false,
+                                });
                         account.verification_key = *verification_key;
                         account.claimed = true;
-                        account.nonce = account.nonce.checked_add(1).ok_or(LedgerError::Overflow)?;
+                        account.nonce =
+                            account.nonce.checked_add(1).ok_or(LedgerError::Overflow)?;
                         // AIRDROP: concesso una sola volta per conto, alla
                         // prima transizione unclaimed -> claimed, finché il
                         // numero di beneficiari resta sotto il tetto.
@@ -1393,16 +1559,24 @@ impl Ledger {
         let (genesis_rec, records, loaded_tip) = if log_has_content {
             let (g, r, t) = Self::read_and_verify_log(&log_path, &anchor_path, &journal)?;
             if g.genesis_hash != genesis_hash {
-                return Err(LedgerError::ConfigMismatch { reason: "genesis hash differente dai parametri e dalle identità forniti".into() });
+                return Err(LedgerError::ConfigMismatch {
+                    reason: "genesis hash differente dai parametri e dalle identità forniti".into(),
+                });
             }
             if g.node_vk != node.verification_key {
-                return Err(LedgerError::ConfigMismatch { reason: "node verification key differente".into() });
+                return Err(LedgerError::ConfigMismatch {
+                    reason: "node verification key differente".into(),
+                });
             }
             if g.creator_vk != creator.verification_key {
-                return Err(LedgerError::ConfigMismatch { reason: "creator verification key differente".into() });
+                return Err(LedgerError::ConfigMismatch {
+                    reason: "creator verification key differente".into(),
+                });
             }
             if g.creator_address != creator.address {
-                return Err(LedgerError::ConfigMismatch { reason: "creator address differente".into() });
+                return Err(LedgerError::ConfigMismatch {
+                    reason: "creator address differente".into(),
+                });
             }
             if address_of(&g.creator_vk) != g.creator_address {
                 return Err(LedgerError::TamperDetected {
@@ -1418,14 +1592,22 @@ impl Ledger {
             // lo stato è incoerente (o manipolato): rifiuto bloccante.
             let last = journal
                 .read_last(&node.verification_key, &genesis_hash)
-                .map_err(|e| LedgerError::TamperDetected { at_record: 0, reason: format!("journal: {}", e) })?;
+                .map_err(|e| LedgerError::TamperDetected {
+                    at_record: 0,
+                    reason: format!("journal: {}", e),
+                })?;
             if last.is_some() {
                 return Err(LedgerError::TamperDetected {
                     at_record: 0,
-                    reason: "log vuoto ma il journal esterno contiene ancore: stato incoerente".into(),
+                    reason: "log vuoto ma il journal esterno contiene ancore: stato incoerente"
+                        .into(),
                 });
             }
-            (GenesisRecord::signed(params, node, creator), Vec::new(), genesis_hash)
+            (
+                GenesisRecord::signed(params, node, creator),
+                Vec::new(),
+                genesis_hash,
+            )
         };
 
         // Collisione creatore/conto di sistema rifiutata: senza questo
@@ -1436,13 +1618,18 @@ impl Ledger {
         for (i, rec) in records.iter().enumerate() {
             match rec {
                 Record::Block(b) => {
-                    state.apply_block(b).map_err(|e| LedgerError::TamperDetected {
-                        at_record: i as u64,
-                        reason: format!("blocco non valido: {}", e),
-                    })?;
+                    state
+                        .apply_block(b)
+                        .map_err(|e| LedgerError::TamperDetected {
+                            at_record: i as u64,
+                            reason: format!("blocco non valido: {}", e),
+                        })?;
                 }
                 Record::Genesis(_) => {
-                    return Err(LedgerError::TamperDetected { at_record: i as u64, reason: "genesis duplicato".into() });
+                    return Err(LedgerError::TamperDetected {
+                        at_record: i as u64,
+                        reason: "genesis duplicato".into(),
+                    });
                 }
             }
         }
@@ -1452,12 +1639,15 @@ impl Ledger {
         // bloccante, mai silenziata.
         let mut full_total: u128 = 0;
         for a in state.accounts.values() {
-            full_total = full_total.checked_add(a.balance as u128).ok_or(LedgerError::Overflow)?;
+            full_total = full_total
+                .checked_add(a.balance as u128)
+                .ok_or(LedgerError::Overflow)?;
         }
         if full_total != state.accounts_total {
             return Err(LedgerError::TamperDetected {
                 at_record: 0,
-                reason: "invariante contabile incrementale incoerente col riconteggio completo".into(),
+                reason: "invariante contabile incrementale incoerente col riconteggio completo"
+                    .into(),
             });
         }
 
@@ -1503,15 +1693,24 @@ impl Ledger {
     ) -> Result<(GenesisRecord, Vec<Record>, Hash), LedgerError> {
         let meta = fs::metadata(log_path)?;
         if meta.len() > MAX_LOG_BYTES {
-            return Err(LedgerError::TamperDetected { at_record: 0, reason: "log oltre il limite di dimensione".into() });
+            return Err(LedgerError::TamperDetected {
+                at_record: 0,
+                reason: "log oltre il limite di dimensione".into(),
+            });
         }
         let raw = fs::read(log_path)?;
         if raw.len() < 12 || &raw[..8] != FILE_MAGIC {
-            return Err(LedgerError::TamperDetected { at_record: 0, reason: "header file non valido".into() });
+            return Err(LedgerError::TamperDetected {
+                at_record: 0,
+                reason: "header file non valido".into(),
+            });
         }
         let version = u32::from_le_bytes(raw[8..12].try_into().unwrap());
         if version != FILE_VERSION {
-            return Err(LedgerError::TamperDetected { at_record: 0, reason: "versione file non supportata".into() });
+            return Err(LedgerError::TamperDetected {
+                at_record: 0,
+                reason: "versione file non supportata".into(),
+            });
         }
         let mut records: Vec<Record> = Vec::new();
         let mut chain_hashes: Vec<Hash> = Vec::new();
@@ -1521,20 +1720,30 @@ impl Ledger {
         let mut idx = 0u64;
         while pos < raw.len() {
             if pos + 4 > raw.len() {
-                return Err(LedgerError::TamperDetected { at_record: idx, reason: "record troncato".into() });
+                return Err(LedgerError::TamperDetected {
+                    at_record: idx,
+                    reason: "record troncato".into(),
+                });
             }
             let len = u32::from_le_bytes(raw[pos..pos + 4].try_into().unwrap()) as usize;
             pos += 4;
             if len == 0 || len > MAX_RECORD_BYTES {
-                return Err(LedgerError::TamperDetected { at_record: idx, reason: "dimensione record fuori limiti".into() });
+                return Err(LedgerError::TamperDetected {
+                    at_record: idx,
+                    reason: "dimensione record fuori limiti".into(),
+                });
             }
             if pos + len > raw.len() {
-                return Err(LedgerError::TamperDetected { at_record: idx, reason: "record troncato".into() });
+                return Err(LedgerError::TamperDetected {
+                    at_record: idx,
+                    reason: "record troncato".into(),
+                });
             }
             let rec_bytes = &raw[pos..pos + len];
             pos += len;
-            let rec: Record = borsh_exact(rec_bytes).map_err(|_| {
-                LedgerError::TamperDetected { at_record: idx, reason: "record non deserializzabile o byte residui".into() }
+            let rec: Record = borsh_exact(rec_bytes).map_err(|_| LedgerError::TamperDetected {
+                at_record: idx,
+                reason: "record non deserializzabile o byte residui".into(),
             })?;
             let seed = prev_hash.unwrap_or_else(|| match &rec {
                 Record::Genesis(g) => g.genesis_hash,
@@ -1544,10 +1753,18 @@ impl Ledger {
             match &rec {
                 Record::Genesis(g) => {
                     if idx != 0 {
-                        return Err(LedgerError::TamperDetected { at_record: idx, reason: "genesis fuori posizione".into() });
+                        return Err(LedgerError::TamperDetected {
+                            at_record: idx,
+                            reason: "genesis fuori posizione".into(),
+                        });
                     }
                     if g.genesis_hash
-                        != genesis_identity_hash(&g.params, &g.node_vk, &g.creator_address, &g.creator_vk)
+                        != genesis_identity_hash(
+                            &g.params,
+                            &g.node_vk,
+                            &g.creator_address,
+                            &g.creator_vk,
+                        )
                     {
                         return Err(LedgerError::TamperDetected {
                             at_record: idx,
@@ -1555,7 +1772,10 @@ impl Ledger {
                         });
                     }
                     if !g.verify_signature() {
-                        return Err(LedgerError::TamperDetected { at_record: idx, reason: "firma del genesis non valida".into() });
+                        return Err(LedgerError::TamperDetected {
+                            at_record: idx,
+                            reason: "firma del genesis non valida".into(),
+                        });
                     }
                     node_vk = Some(g.node_vk);
                 }
@@ -1580,7 +1800,10 @@ impl Ledger {
             idx += 1;
         }
         if records.is_empty() || !matches!(records[0], Record::Genesis(_)) {
-            return Err(LedgerError::TamperDetected { at_record: 0, reason: "genesis mancante".into() });
+            return Err(LedgerError::TamperDetected {
+                at_record: 0,
+                reason: "genesis mancante".into(),
+            });
         }
         let genesis = match records.remove(0) {
             Record::Genesis(g) => g,
@@ -1595,15 +1818,26 @@ impl Ledger {
         }
         let bytes = fs::read(anchor_path)?;
         if bytes.len() > MAX_ANCHOR_BYTES {
-            return Err(LedgerError::TamperDetected { at_record: 0, reason: "anchor oltre il limite di dimensione".into() });
+            return Err(LedgerError::TamperDetected {
+                at_record: 0,
+                reason: "anchor oltre il limite di dimensione".into(),
+            });
         }
-        let file: AnchorFile = borsh_exact(&bytes)
-            .map_err(|_| LedgerError::TamperDetected { at_record: 0, reason: "anchor corrotto o con byte residui".into() })?;
+        let file: AnchorFile = borsh_exact(&bytes).map_err(|_| LedgerError::TamperDetected {
+            at_record: 0,
+            reason: "anchor corrotto o con byte residui".into(),
+        })?;
         if !file.verify(&genesis.node_vk) {
-            return Err(LedgerError::TamperDetected { at_record: 0, reason: "firma dell'anchor non valida".into() });
+            return Err(LedgerError::TamperDetected {
+                at_record: 0,
+                reason: "firma dell'anchor non valida".into(),
+            });
         }
         if file.payload.genesis_hash != genesis.genesis_hash {
-            return Err(LedgerError::TamperDetected { at_record: 0, reason: "anchor di un'altra catena".into() });
+            return Err(LedgerError::TamperDetected {
+                at_record: 0,
+                reason: "anchor di un'altra catena".into(),
+            });
         }
         if file.payload.height > log_height {
             return Err(LedgerError::RollbackDetected {
@@ -1613,30 +1847,54 @@ impl Ledger {
             });
         }
         let idx_local = file.payload.height as usize;
-        if idx_local >= chain_hashes.len() || file.payload.tip_record_hash != chain_hashes[idx_local] {
-            return Err(LedgerError::TamperDetected { at_record: file.payload.height, reason: "catena dei record non corrisponde all'anchor locale".into() });
+        if idx_local >= chain_hashes.len()
+            || file.payload.tip_record_hash != chain_hashes[idx_local]
+        {
+            return Err(LedgerError::TamperDetected {
+                at_record: file.payload.height,
+                reason: "catena dei record non corrisponde all'anchor locale".into(),
+            });
         }
 
         // JOURNAL ESTERNO (append-only, firmato, monotono): la traccia che
         // sopravvive al ripristino simultaneo di log e anchor locali.
         let last = journal
             .read_last(&genesis.node_vk, &genesis.genesis_hash)
-            .map_err(|e| LedgerError::TamperDetected { at_record: 0, reason: format!("journal: {}", e) })?;
+            .map_err(|e| LedgerError::TamperDetected {
+                at_record: 0,
+                reason: format!("journal: {}", e),
+            })?;
         let (j_height, j_tip) = match last {
             Some(x) => x,
-            None => return Err(LedgerError::MissingAnchor { source: "esterno (journal)" }),
+            None => {
+                return Err(LedgerError::MissingAnchor {
+                    source: "esterno (journal)",
+                })
+            }
         };
         if j_height > log_height {
-            return Err(LedgerError::RollbackDetected { anchor_height: j_height, log_height, source: "esterno (journal)" });
+            return Err(LedgerError::RollbackDetected {
+                anchor_height: j_height,
+                log_height,
+                source: "esterno (journal)",
+            });
         }
         let idx_journal = j_height as usize;
         if idx_journal >= chain_hashes.len() || j_tip != chain_hashes[idx_journal] {
-            return Err(LedgerError::TamperDetected { at_record: j_height, reason: "catena dei record non corrisponde al journal esterno".into() });
+            return Err(LedgerError::TamperDetected {
+                at_record: j_height,
+                reason: "catena dei record non corrisponde al journal esterno".into(),
+            });
         }
         Ok((genesis, records, tip_record_hash))
     }
 
-    fn append_record(&mut self, node: &Wallet, rec: &Record, new_height: u64) -> Result<(), LedgerError> {
+    fn append_record(
+        &mut self,
+        node: &Wallet,
+        rec: &Record,
+        new_height: u64,
+    ) -> Result<(), LedgerError> {
         let old_tip = self.tip_record_hash;
         let bytes = borsh::to_vec(rec).map_err(|_| LedgerError::Overflow)?;
         let new_tip = record_chain_hash(&old_tip, &bytes);
@@ -1661,7 +1919,11 @@ impl Ledger {
     }
 
     fn write_anchors(&self, node: &Wallet, height: u64, tip: Hash) -> Result<(), LedgerError> {
-        let payload = AnchorPayload { genesis_hash: self.state.genesis.genesis_hash, height, tip_record_hash: tip };
+        let payload = AnchorPayload {
+            genesis_hash: self.state.genesis.genesis_hash,
+            height,
+            tip_record_hash: tip,
+        };
         let file = AnchorFile::signed(node, payload.clone());
         let bytes = borsh::to_vec(&file).map_err(|_| LedgerError::Overflow)?;
         atomic_write(&self.anchor_path, &bytes)?;
@@ -1670,7 +1932,11 @@ impl Ledger {
         Ok(())
     }
 
-    pub fn submit(&mut self, node: &Wallet, txs: Vec<SignedTransaction>) -> Result<(), LedgerError> {
+    pub fn submit(
+        &mut self,
+        node: &Wallet,
+        txs: Vec<SignedTransaction>,
+    ) -> Result<(), LedgerError> {
         if !self.operational {
             return Err(LedgerError::NotOperative);
         }
@@ -1825,15 +2091,34 @@ mod tests {
         let chain = l.state.genesis.genesis_hash;
         // Carol non esiste: il Claim crea il conto e accredita l'airdrop
         // (100 unità) alla prima transizione unclaimed -> claimed.
-        l.submit(&f.node, vec![SignedTransaction::claim(&carol, chain, 0)]).unwrap();
+        l.submit(&f.node, vec![SignedTransaction::claim(&carol, chain, 0)])
+            .unwrap();
         assert_eq!(l.state.balance(&carol.address), 100);
         assert_eq!(l.state.nonce(&carol.address), 1);
         assert_eq!(l.state.airdrop_recipients, 1);
         // Creator paga carol; carol spende. Fee 10, cashback 9 dal pool.
-        l.submit(&f.node, vec![SignedTransaction::transfer(&f.creator, chain, 0, carol.address, 500)])
-            .unwrap();
-        l.submit(&f.node, vec![SignedTransaction::transfer(&carol, chain, 1, f.creator.address, 100)])
-            .unwrap();
+        l.submit(
+            &f.node,
+            vec![SignedTransaction::transfer(
+                &f.creator,
+                chain,
+                0,
+                carol.address,
+                500,
+            )],
+        )
+        .unwrap();
+        l.submit(
+            &f.node,
+            vec![SignedTransaction::transfer(
+                &carol,
+                chain,
+                1,
+                f.creator.address,
+                100,
+            )],
+        )
+        .unwrap();
         // Carol: 100 + 500 - (100 + 10 di fee) + 9 di cashback = 499.
         assert_eq!(l.state.balance(&carol.address), 499);
         // Creator: 599_700 - (500 + 10) + 9 + 100 ricevuti = 599_299.
@@ -1864,8 +2149,17 @@ mod tests {
         let alice = Wallet::from_seed(os_random::<SEED_SIZE>());
         let mut l = Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator).unwrap();
         let chain = l.state.genesis.genesis_hash;
-        l.submit(&f.node, vec![SignedTransaction::transfer(&f.creator, chain, 0, alice.address, 100)])
-            .unwrap();
+        l.submit(
+            &f.node,
+            vec![SignedTransaction::transfer(
+                &f.creator,
+                chain,
+                0,
+                alice.address,
+                100,
+            )],
+        )
+        .unwrap();
         let bad = SignedTransaction::transfer(&alice, chain, 0, f.creator.address, 10);
         match l.submit(&f.node, vec![bad]) {
             Err(LedgerError::UnclaimedAccount(_)) => {}
@@ -1882,7 +2176,10 @@ mod tests {
         let a = SignedTransaction::transfer(&f.creator, chain, 0, alice.address, 1);
         let b = SignedTransaction::transfer(&f.creator, chain, 0, alice.address, 1);
         match l.submit(&f.node, vec![a, b]) {
-            Err(LedgerError::BadNonce { expected: 1, got: 0 }) => {}
+            Err(LedgerError::BadNonce {
+                expected: 1,
+                got: 0,
+            }) => {}
             other => panic!("atteso BadNonce, ottenuto {:?}", other),
         }
     }
@@ -1907,8 +2204,17 @@ mod tests {
         let mut l = Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator).unwrap();
         let chain = l.state.genesis.genesis_hash;
         let alice = Wallet::from_seed(os_random::<SEED_SIZE>());
-        l.submit(&f.node, vec![SignedTransaction::transfer(&f.creator, chain, 0, alice.address, 1)])
-            .unwrap();
+        l.submit(
+            &f.node,
+            vec![SignedTransaction::transfer(
+                &f.creator,
+                chain,
+                0,
+                alice.address,
+                1,
+            )],
+        )
+        .unwrap();
         drop(l);
         let mut wrong = f.params.clone();
         wrong.symbol = "FAKE".into();
@@ -1924,8 +2230,17 @@ mod tests {
         let mut l = Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator).unwrap();
         let chain = l.state.genesis.genesis_hash;
         let alice = Wallet::from_seed(os_random::<SEED_SIZE>());
-        l.submit(&f.node, vec![SignedTransaction::transfer(&f.creator, chain, 0, alice.address, 1)])
-            .unwrap();
+        l.submit(
+            &f.node,
+            vec![SignedTransaction::transfer(
+                &f.creator,
+                chain,
+                0,
+                alice.address,
+                1,
+            )],
+        )
+        .unwrap();
         drop(l);
         let log = f.data.join("ledger.log");
         let mut raw = fs::read(&log).unwrap();
@@ -1947,24 +2262,53 @@ mod tests {
         let mut l = Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator).unwrap();
         let chain = l.state.genesis.genesis_hash;
         let alice = Wallet::from_seed(os_random::<SEED_SIZE>());
-        l.submit(&f.node, vec![SignedTransaction::transfer(&f.creator, chain, 0, alice.address, 1)])
-            .unwrap();
+        l.submit(
+            &f.node,
+            vec![SignedTransaction::transfer(
+                &f.creator,
+                chain,
+                0,
+                alice.address,
+                1,
+            )],
+        )
+        .unwrap();
         // Backup locale dopo il blocco 1.
         fs::copy(f.data.join("ledger.log"), f.data.join("ledger.log.bak")).unwrap();
-        fs::copy(f.data.join("ledger.anchor"), f.data.join("ledger.anchor.bak")).unwrap();
+        fs::copy(
+            f.data.join("ledger.anchor"),
+            f.data.join("ledger.anchor.bak"),
+        )
+        .unwrap();
         // Blocco 2.
-        l.submit(&f.node, vec![SignedTransaction::transfer(&f.creator, chain, 1, alice.address, 1)])
-            .unwrap();
+        l.submit(
+            &f.node,
+            vec![SignedTransaction::transfer(
+                &f.creator,
+                chain,
+                1,
+                alice.address,
+                1,
+            )],
+        )
+        .unwrap();
         drop(l);
         // Ripristino di log E anchor locali a quota 1: il journal esterno,
         // rimasto a quota 2, deve far scattare il rollback.
         fs::copy(f.data.join("ledger.log.bak"), f.data.join("ledger.log")).unwrap();
-        fs::copy(f.data.join("ledger.anchor.bak"), f.data.join("ledger.anchor")).unwrap();
+        fs::copy(
+            f.data.join("ledger.anchor.bak"),
+            f.data.join("ledger.anchor"),
+        )
+        .unwrap();
         match Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator) {
             Err(LedgerError::RollbackDetected { source, .. }) => {
                 assert_eq!(source, "esterno (journal)");
             }
-            other => panic!("atteso RollbackDetected dal journal, ottenuto {:?}", other.map(|_| ())),
+            other => panic!(
+                "atteso RollbackDetected dal journal, ottenuto {:?}",
+                other.map(|_| ())
+            ),
         }
     }
 
@@ -1976,14 +2320,16 @@ mod tests {
         // I primi 3 wallet (airdrop_max_wallets) ricevono 100 unità ciascuno.
         for _ in 0..3 {
             let w = Wallet::from_seed(os_random::<SEED_SIZE>());
-            l.submit(&f.node, vec![SignedTransaction::claim(&w, chain, 0)]).unwrap();
+            l.submit(&f.node, vec![SignedTransaction::claim(&w, chain, 0)])
+                .unwrap();
             assert_eq!(l.state.balance(&w.address), 100);
         }
         assert_eq!(l.state.airdrop_pool, 0);
         assert_eq!(l.state.airdrop_recipients, 3);
         // Il quarto wallet reclama ma NON riceve l'airdrop.
         let late = Wallet::from_seed(os_random::<SEED_SIZE>());
-        l.submit(&f.node, vec![SignedTransaction::claim(&late, chain, 0)]).unwrap();
+        l.submit(&f.node, vec![SignedTransaction::claim(&late, chain, 0)])
+            .unwrap();
         assert_eq!(l.state.balance(&late.address), 0);
         assert_eq!(l.state.airdrop_recipients, 3);
     }
@@ -2009,20 +2355,39 @@ mod tests {
         let chain = l.state.genesis.genesis_hash;
         let system = address_of(&f.node.verification_key);
         let alice = Wallet::from_seed(os_random::<SEED_SIZE>());
-        l.submit(&f.node, vec![SignedTransaction::claim(&alice, chain, 0)]).unwrap();
-        assert_eq!(l.state.balance(&alice.address), 0); // nessun airdrop
-        // Fee 1: cashback pieno sarebbe 9, ma il pool ha solo 5: rimborsati
-        // 5; la fee intera (10) va comunque al sistema.
-        l.submit(&f.node, vec![SignedTransaction::transfer(&f.creator, chain, 0, alice.address, 1_000)])
+        l.submit(&f.node, vec![SignedTransaction::claim(&alice, chain, 0)])
             .unwrap();
+        assert_eq!(l.state.balance(&alice.address), 0); // nessun airdrop
+                                                        // Fee 1: cashback pieno sarebbe 9, ma il pool ha solo 5: rimborsati
+                                                        // 5; la fee intera (10) va comunque al sistema.
+        l.submit(
+            &f.node,
+            vec![SignedTransaction::transfer(
+                &f.creator,
+                chain,
+                0,
+                alice.address,
+                1_000,
+            )],
+        )
+        .unwrap();
         assert_eq!(l.state.cashback_pool, 0);
         assert_eq!(l.state.balance(&f.creator.address), 9_995 - 1_010 + 5);
         assert_eq!(l.state.balance(&system), 10);
         assert_eq!(l.state.balance(&alice.address), 1_000);
         // Fee 2: pool esaurito -> nessun rimborso; il mittente sostiene
         // l'intera fee, accreditata al sistema.
-        l.submit(&f.node, vec![SignedTransaction::transfer(&alice, chain, 1, f.creator.address, 100)])
-            .unwrap();
+        l.submit(
+            &f.node,
+            vec![SignedTransaction::transfer(
+                &alice,
+                chain,
+                1,
+                f.creator.address,
+                100,
+            )],
+        )
+        .unwrap();
         assert_eq!(l.state.balance(&alice.address), 1_000 - 110);
         assert_eq!(l.state.balance(&system), 20);
     }
@@ -2050,7 +2415,10 @@ mod tests {
         rec.creator_address = address_of(&f.node.verification_key);
         match rec.check_identity_collision() {
             Err(LedgerError::ConfigMismatch { .. }) => {}
-            other_err => panic!("attesa ConfigMismatch, ottenuto {:?}", other_err.map(|_| ())),
+            other_err => panic!(
+                "attesa ConfigMismatch, ottenuto {:?}",
+                other_err.map(|_| ())
+            ),
         }
     }
 
@@ -2074,10 +2442,20 @@ mod tests {
         let f = fixture("journal-repair");
         let alice = Wallet::from_seed(os_random::<SEED_SIZE>());
         {
-            let mut l = Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator).unwrap();
+            let mut l =
+                Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator).unwrap();
             let chain = l.state.genesis.genesis_hash;
-            l.submit(&f.node, vec![SignedTransaction::transfer(&f.creator, chain, 0, alice.address, 1)])
-                .unwrap();
+            l.submit(
+                &f.node,
+                vec![SignedTransaction::transfer(
+                    &f.creator,
+                    chain,
+                    0,
+                    alice.address,
+                    1,
+                )],
+            )
+            .unwrap();
         }
         // L'anchor pubblicato dal ledger è la voce a quota 1 del journal.
         let af: AnchorFile = borsh_exact(&fs::read(f.data.join("ledger.anchor")).unwrap()).unwrap();
@@ -2091,17 +2469,32 @@ mod tests {
         lower.height = 0;
         assert!(journal.publish(&f.node, lower).is_err());
         // Idempotenza esatta: stessa altezza e stesso tip -> Ok(false).
-        assert!(matches!(journal.publish(&f.node, af.payload.clone()), Ok(false)));
+        assert!(matches!(
+            journal.publish(&f.node, af.payload.clone()),
+            Ok(false)
+        ));
         // Coda incompleta (crash simulato): la riapertura la tollera e la
         // publish successiva la TRONCA prima dell'append.
         {
-            let mut jf = OpenOptions::new().append(true).open(&f.ext.join("anchor-journal.log")).unwrap();
+            let mut jf = OpenOptions::new()
+                .append(true)
+                .open(&f.ext.join("anchor-journal.log"))
+                .unwrap();
             jf.write_all(&[0xAB, 0xCD, 0x00]).unwrap();
         }
         let mut l = Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator).unwrap();
         let chain = l.state.genesis.genesis_hash;
-        l.submit(&f.node, vec![SignedTransaction::transfer(&f.creator, chain, 1, alice.address, 1)])
-            .unwrap();
+        l.submit(
+            &f.node,
+            vec![SignedTransaction::transfer(
+                &f.creator,
+                chain,
+                1,
+                alice.address,
+                1,
+            )],
+        )
+        .unwrap();
         drop(l);
         // Il journal ripulito resta leggibile e coerente.
         let l = Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator).unwrap();
@@ -2140,7 +2533,11 @@ mod tests {
         };
         fs::write(&path, &borsh::to_vec(&file).unwrap()).unwrap();
         match Wallet::load_encrypted(&path, b"pass") {
-            Err(msg) => assert!(msg.contains("limiti"), "atteso rifiuto per limiti, ottenuto: {}", msg),
+            Err(msg) => assert!(
+                msg.contains("limiti"),
+                "atteso rifiuto per limiti, ottenuto: {}",
+                msg
+            ),
             Ok(_) => panic!("wallet con parametri KDF eccessivi accettato"),
         }
     }
@@ -2151,12 +2548,31 @@ mod tests {
         let alice = Wallet::from_seed(os_random::<SEED_SIZE>());
         let jpath = f.ext.join("anchor-journal.log");
         {
-            let mut l = Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator).unwrap();
+            let mut l =
+                Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator).unwrap();
             let chain = l.state.genesis.genesis_hash;
-            l.submit(&f.node, vec![SignedTransaction::transfer(&f.creator, chain, 0, alice.address, 1)])
-                .unwrap();
-            l.submit(&f.node, vec![SignedTransaction::transfer(&f.creator, chain, 1, alice.address, 1)])
-                .unwrap();
+            l.submit(
+                &f.node,
+                vec![SignedTransaction::transfer(
+                    &f.creator,
+                    chain,
+                    0,
+                    alice.address,
+                    1,
+                )],
+            )
+            .unwrap();
+            l.submit(
+                &f.node,
+                vec![SignedTransaction::transfer(
+                    &f.creator,
+                    chain,
+                    1,
+                    alice.address,
+                    1,
+                )],
+            )
+            .unwrap();
         }
         // Estrae le voci complete dal journal (header 12 byte + voci):
         // il genesis è ancorato alla quota 0, quindi e0=genesis, e1, e2.
@@ -2216,10 +2632,20 @@ mod tests {
         let f = fixture("empty-log-blocked");
         let alice = Wallet::from_seed(os_random::<SEED_SIZE>());
         {
-            let mut l = Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator).unwrap();
+            let mut l =
+                Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator).unwrap();
             let chain = l.state.genesis.genesis_hash;
-            l.submit(&f.node, vec![SignedTransaction::transfer(&f.creator, chain, 0, alice.address, 1)])
-                .unwrap();
+            l.submit(
+                &f.node,
+                vec![SignedTransaction::transfer(
+                    &f.creator,
+                    chain,
+                    0,
+                    alice.address,
+                    1,
+                )],
+            )
+            .unwrap();
         }
         // Il log viene azzerato MA il journal contiene già ancore: non è
         // un crash genuino. L'apertura deve essere bloccata.
@@ -2258,8 +2684,12 @@ mod tests {
         // La facciata coincide con la contabilità interna dopo un'operazione
         // (claim + airdrop: il pool si scarica sul saldo, la supply no).
         let chain = l.state.genesis.genesis_hash;
-        l.submit(&f.node, vec![SignedTransaction::claim(&carol, chain, 0)]).unwrap();
-        assert_eq!(l.state.erc20_balance_of(&carol.address), l.state.balance(&carol.address));
+        l.submit(&f.node, vec![SignedTransaction::claim(&carol, chain, 0)])
+            .unwrap();
+        assert_eq!(
+            l.state.erc20_balance_of(&carol.address),
+            l.state.balance(&carol.address)
+        );
         assert_eq!(l.state.erc20_balance_of(&carol.address), 100);
         assert_eq!(l.state.erc20_total_supply(), 1_000_000);
     }
@@ -2270,7 +2700,8 @@ mod tests {
         let alice = Wallet::from_seed(os_random::<SEED_SIZE>());
         let mut l = Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator).unwrap();
         let chain = l.state.genesis.genesis_hash;
-        l.submit(&f.node, vec![SignedTransaction::claim(&alice, chain, 0)]).unwrap();
+        l.submit(&f.node, vec![SignedTransaction::claim(&alice, chain, 0)])
+            .unwrap();
         // Asserzione automatica: una firma ML-DSA-65 contraffatta è rifiutata
         // e lo stato contabile NON cambia (undo log: byte-identico).
         let mut forged = SignedTransaction::transfer(&alice, chain, 1, f.creator.address, 100);
@@ -2291,8 +2722,10 @@ mod tests {
         let chain = l.state.genesis.genesis_hash;
         let alice = Wallet::from_seed(os_random::<SEED_SIZE>());
         let bob = Wallet::from_seed(os_random::<SEED_SIZE>());
-        l.submit(&f.node, vec![SignedTransaction::claim(&alice, chain, 0)]).unwrap();
-        l.submit(&f.node, vec![SignedTransaction::claim(&bob, chain, 0)]).unwrap();
+        l.submit(&f.node, vec![SignedTransaction::claim(&alice, chain, 0)])
+            .unwrap();
+        l.submit(&f.node, vec![SignedTransaction::claim(&bob, chain, 0)])
+            .unwrap();
         // Stato di riferimento prima del tentativo fallito.
         let before = l.state.clone();
         let before_total = l.state.accounts_total;
@@ -2313,4 +2746,3 @@ mod tests {
         assert_eq!(l.state.blocks.len(), before.blocks.len());
     }
 }
-
