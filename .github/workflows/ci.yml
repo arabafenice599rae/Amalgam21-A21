@@ -66,19 +66,19 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
+          set -u
           {
             echo "## clippy — commit ${{ github.sha }}"
             echo ""
-            echo '(`tail -n 150` dell'output completo; vedi i log della run per il dettaglio.)'
             echo '~~~'
             tail -n 150 diag.log
             echo '~~~'
           } > body.md
-          TITLE="CI: diagnostica compilazione"
-          NUM=$(gh api "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq '.[] | select(.title=="'"'$TITLE'"'"') | select(.pull_request==null) | .number' | head -n1)
+          TITLE="CI diagnostica compilazione"
+          NUM=$(gh api "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq ".[] | select(.title==\"\$TITLE\") | select(.pull_request==null) | .number" | head -n1)
           if [ -z "$NUM" ]; then
             gh issue create --title "$TITLE" --body "Issue tecnica aperta dalla CI: raccoglie errori di compilazione e lint per la correzione." > /dev/null
-            NUM=$(gh api "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq '.[] | select(.title=="'"'$TITLE'"'"') | select(.pull_request==null) | .number' | head -n1)
+            NUM=$(gh api "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq ".[] | select(.title==\"\$TITLE\") | select(.pull_request==null) | .number" | head -n1)
           fi
           gh issue comment "$NUM" --body-file body.md
 
@@ -106,19 +106,19 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
+          set -u
           {
             echo "## build e test — commit ${{ github.sha }}"
             echo ""
             echo '~~~'
-            tail -n 150 diag.log 2>/dev/null
-            tail -n 80 diag-test.log 2>/dev/null
+            tail -n 150 diag.log 2>/dev/null; tail -n 80 diag-test.log 2>/dev/null
             echo '~~~'
           } > body.md
-          TITLE="CI: diagnostica compilazione"
-          NUM=$(gh api "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq '.[] | select(.title=="'"'$TITLE'"'"') | select(.pull_request==null) | .number' | head -n1)
+          TITLE="CI diagnostica compilazione"
+          NUM=$(gh api "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq ".[] | select(.title==\"\$TITLE\") | select(.pull_request==null) | .number" | head -n1)
           if [ -z "$NUM" ]; then
             gh issue create --title "$TITLE" --body "Issue tecnica aperta dalla CI: raccoglie errori di compilazione e lint per la correzione." > /dev/null
-            NUM=$(gh api "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq '.[] | select(.title=="'"'$TITLE'"'"') | select(.pull_request==null) | .number' | head -n1)
+            NUM=$(gh api "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq ".[] | select(.title==\"\$TITLE\") | select(.pull_request==null) | .number" | head -n1)
           fi
           gh issue comment "$NUM" --body-file body.md
 
