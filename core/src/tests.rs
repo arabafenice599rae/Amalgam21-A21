@@ -1009,3 +1009,49 @@ fn open_independent_rejects_same_device() {
     let l = Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator).unwrap();
     assert_eq!(l.state.height, 0);
 }
+
+#[test]
+fn header_only_log_reinitialized_fresh() {
+    let f = fixture("header-only");
+    // Header di 12 byte SENZA genesis: crash tra la scrittura dell'header
+    // e il record di genesis. Nessun checkpoint, nessun journal: apertura
+    // fresh legittima; il log deve essere RISCRITTO da zero (truncate),
+    // non accodato (header doppio = log illeggibile alla successiva
+    // apertura).
+    let mut head = Vec::new();
+    head.extend_from_slice(FILE_MAGIC);
+    head.extend_from_slice(&FILE_VERSION.to_le_bytes());
+    fs::write(f.data.join("ledger.log"), &head).unwrap();
+    let mut l = Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator).unwrap();
+    assert_eq!(l.state.height, 0);
+    let chain = l.state.genesis.genesis_hash;
+    let alice = Wallet::from_seed(os_random::<SEED_SIZE>());
+    l.submit(
+        &f.node,
+        vec![SignedTransaction::transfer(
+            &f.creator,
+            chain,
+            0,
+            alice.address,
+            1,
+        )],
+    )
+    .unwrap();
+    drop(l);
+    let l2 = Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator).unwrap();
+    assert_eq!(l2.state.height, 1);
+    assert_eq!(l2.state.balance(&alice.address), 1);
+}
+
+#[test]
+fn short_log_rejected_as_tamper() {
+    let f = fixture("short-log");
+    // Un log di 5 byte NON è né vuoto né valido: non è un crash genuino
+    // (l'header è 12 byte in una sola write_all) e non deve MAI finire nel
+    // percorso di reinizializzazione. Rifiuto bloccante.
+    fs::write(f.data.join("ledger.log"), [7u8; 5]).unwrap();
+    match Ledger::open(&f.data, &f.ext, f.params.clone(), &f.node, &f.creator) {
+        Err(LedgerError::TamperDetected { .. }) => {}
+        other => panic!("attesa TamperDetected, ottenuto {:?}", other.map(|_| ())),
+    }
+}

@@ -45,6 +45,20 @@ fn open_append(path: &Path) -> Result<File, LedgerError> {
     Ok(o.open(path)?)
 }
 
+/// Creazione/azzeramento del log: header-only (0 o 12 byte residui di un
+/// crash durante l'apertura) e nessun checkpoint => il log è NUOVO, va
+/// riscritto da zero con truncate per non accumulare header doppi.
+fn open_fresh(path: &Path) -> Result<File, LedgerError> {
+    let mut o = OpenOptions::new();
+    o.create(true).append(true).truncate(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        o.mode(0o600);
+    }
+    Ok(o.open(path)?)
+}
+
 impl Ledger {
     pub fn open(
         dir: &Path,
@@ -122,14 +136,19 @@ impl Ledger {
         };
 
         // Un log VUOTO (0 byte: crash tra creazione e prima scrittura) è
-        // trattato come assente; un errore di lettura diverso da NotFound
-        // resta BLOCCANTE (mai mascherare un danno).
-        let log_has_content = match fs::metadata(&log_path) {
-            Ok(m) => m.len() > 0,
+        // trattato come assente; un log HEADER-ONLY (esattamente 12 byte:
+        // stato legittimo IMMEDIATAMENTE DOPO una rotazione, o crash tra
+        // header e genesis in apertura fresh) segue lo stesso percorso di
+        // recovery: contiene ZERO record. Un log di 1-11 byte NON è vuoto
+        // né valido: finisce nella verifica e viene rifiutato come header
+        // corrotto (danno, non crash). Un errore di lettura diverso da
+        // NotFound resta BLOCCANTE (mai mascherare un danno).
+        let log_has_records = match fs::metadata(&log_path) {
+            Ok(m) => !(m.len() == 0 || m.len() == 12),
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => false,
             Err(e) => return Err(e.into()),
         };
-        let (full_mode, genesis_rec, records, loaded_tip) = if log_has_content {
+        let (full_mode, genesis_rec, records, loaded_tip) = if log_has_records {
             let base = ck.as_ref().map(|c| CheckpointView {
                 genesis: &c.state.genesis,
                 height: c.height,
@@ -325,10 +344,12 @@ impl Ledger {
             last_ckpt_height: ck.as_ref().map(|c| c.height).unwrap_or(0),
             operational: true,
         };
-        let log_is_empty = !log_has_content;
+        let log_is_empty = !log_has_records;
         if log_is_empty && ck.is_none() {
-            // v0.12: log fresco, header + record di genesis.
-            ledger.log = Some(open_append(&log_path)?);
+            // Log NUOVO (0 byte) o header-only di un'apertura fresh
+            // interrotta: riscrittura da zero con TRUNCATE, header e record
+            // di genesis.
+            ledger.log = Some(open_fresh(&log_path)?);
             let mut head = Vec::new();
             head.extend_from_slice(FILE_MAGIC);
             head.extend_from_slice(&FILE_VERSION.to_le_bytes());
@@ -338,8 +359,10 @@ impl Ledger {
             let g = Record::Genesis(ledger.state.genesis.clone());
             ledger.append_record(node, &g, 0)?;
         } else if log_is_empty {
-            // Recovery post-rotazione: log vuoto SENZA genesis, catena che
-            // continua dal checkpoint; ancore risincronizzate alla punta.
+            // Recovery post-rotazione: log VUOTO o HEADER-ONLY (12 byte è
+            // lo stato normale subito dopo una rotazione) SENZA genesis: la
+            // catena continua dal checkpoint; ancore risincronizzate.
+            // L'append NON riscrive l'header: quello esistente è valido.
             ledger.log = Some(open_append(&log_path)?);
             let c = ck.as_ref().expect("log vuoto con checkpoint");
             ledger.write_anchors(node, c.height, c.tip_record_hash)?;
