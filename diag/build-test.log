@@ -1,0 +1,448 @@
+commit: 87286cdeda0d8e6bd9764cf4eb05c67c5fa523fa
+job: build-test
+run: 42499833606
+
+[1m[92m    Updating[0m crates.io index
+[1m[92m Downloading[0m crates ...
+[1m[92m  Downloaded[0m ciborium-ll v0.2.2
+[1m[92m  Downloaded[0m cast v0.3.0
+[1m[92m  Downloaded[0m anstyle v1.0.14
+[1m[92m  Downloaded[0m autocfg v1.5.1
+[1m[92m  Downloaded[0m crossbeam-utils v0.8.23
+[1m[92m  Downloaded[0m plotters-svg v0.3.7
+[1m[92m  Downloaded[0m aead v0.5.2
+[1m[92m  Downloaded[0m block-buffer v0.10.4
+[1m[92m  Downloaded[0m proc-macro-error-attr2 v2.0.0
+[1m[92m  Downloaded[0m rtoolbox v0.0.6
+[1m[92m  Downloaded[0m errno v0.3.14
+[1m[92m  Downloaded[0m libcrux-macros v0.0.4
+[1m[92m  Downloaded[0m fnv v1.0.7
+[1m[92m  Downloaded[0m bincode v1.3.3
+[1m[92m  Downloaded[0m bit-vec v0.10.1
+[1m[92m  Downloaded[0m bs58 v0.5.1
+[1m[92m  Downloaded[0m argon2 v0.5.3
+[1m[92m  Downloaded[0m base64ct v1.8.3
+[1m[92m  Downloaded[0m cpufeatures v0.2.17
+[1m[92m  Downloaded[0m semver v1.0.28
+[1m[92m  Downloaded[0m libcrux-secrets v0.0.7
+[1m[92m  Downloaded[0m rand_core v0.10.1
+[1m[92m  Downloaded[0m bit-set v0.11.1
+[1m[92m  Downloaded[0m core_detect v1.0.0
+[1m[92m  Downloaded[0m either v1.19.0
+[1m[92m  Downloaded[0m once_cell v1.21.4
+[1m[92m  Downloaded[0m anes v0.1.6
+[1m[92m  Downloaded[0m blake2 v0.10.6
+[1m[92m  Downloaded[0m borsh-derive v1.8.1
+[1m[92m  Downloaded[0m clap_lex v1.1.1
+[1m[92m  Downloaded[0m bitflags v2.13.2
+[1m[92m  Downloaded[0m crypto-common v0.1.7
+[1m[92m  Downloaded[0m proc-macro2 v1.0.107
+[1m[92m  Downloaded[0m serde_core v1.0.229
+[1m[92m  Downloaded[0m crossbeam-epoch v0.9.21
+[1m[92m  Downloaded[0m equivalent v1.0.3
+[1m[92m  Downloaded[0m itoa v1.0.18
+[1m[92m  Downloaded[0m proc-macro-crate v3.5.0
+[1m[92m  Downloaded[0m rayon-core v1.13.0
+[1m[92m  Downloaded[0m subtle v2.6.1
+[1m[92m  Downloaded[0m borsh v1.8.1
+[1m[92m  Downloaded[0m bytes v1.12.1
+[1m[92m  Downloaded[0m crossbeam-deque v0.8.8
+[1m[92m  Downloaded[0m digest v0.10.7
+[1m[92m  Downloaded[0m iai-callgrind v0.16.1
+[1m[92m  Downloaded[0m itertools v0.10.5
+[1m[92m  Downloaded[0m rustc_version v0.4.1
+[1m[92m  Downloaded[0m same-file v1.0.6
+[1m[92m  Downloaded[0m ciborium v0.2.2
+[1m[92m  Downloaded[0m clap_builder v4.6.7
+[1m[92m  Downloaded[0m criterion v0.5.1
+[1m[92m  Downloaded[0m derive_more-impl v2.1.1
+[1m[92m  Downloaded[0m memchr v2.8.3
+[1m[92m  Downloaded[0m aho-corasick v1.1.5
+[1m[92m  Downloaded[0m is-terminal v0.4.17
+[1m[92m  Downloaded[0m quick-error v1.2.3
+[1m[92m  Downloaded[0m version_check v0.9.5
+[1m[92m  Downloaded[0m half v2.7.1
+[1m[92m  Downloaded[0m indexmap v2.14.2
+[1m[92m  Downloaded[0m rpassword v7.5.4
+[1m[92m  Downloaded[0m wait-timeout v0.2.1
+[1m[92m  Downloaded[0m keccak v0.1.6
+[1m[92m  Downloaded[0m cipher v0.4.4
+[1m[92m  Downloaded[0m iai-callgrind-macros v0.6.1
+[1m[92m  Downloaded[0m rusty-fork v0.3.1
+[1m[92m  Downloaded[0m universal-hash v0.5.1
+[1m[92m  Downloaded[0m ciborium-io v0.2.2
+[1m[92m  Downloaded[0m inout v0.1.4
+[1m[92m  Downloaded[0m plotters v0.3.7
+[1m[92m  Downloaded[0m poly1305 v0.8.0
+[1m[92m  Downloaded[0m rayon v1.12.0
+[1m[92m  Downloaded[0m unarray v0.1.4
+[1m[92m  Downloaded[0m chacha20poly1305 v0.10.1
+[1m[92m  Downloaded[0m libcrux-platform v0.0.4
+[1m[92m  Downloaded[0m rand_core v0.6.4
+[1m[92m  Downloaded[0m tempfile v3.27.0
+[1m[92m  Downloaded[0m tinytemplate v1.2.1
+[1m[92m  Downloaded[0m walkdir v2.5.0
+[1m[92m  Downloaded[0m zmij v1.0.23
+[1m[92m  Downloaded[0m serde_derive v1.0.229
+[1m[92m  Downloaded[0m toml_datetime v1.1.3+spec-1.1.0
+[1m[92m  Downloaded[0m opaque-debug v0.3.1
+[1m[92m  Downloaded[0m tls_codec_derive v0.5.0
+[1m[92m  Downloaded[0m toml_parser v1.1.5+spec-1.1.0
+[1m[92m  Downloaded[0m unicode-ident v1.0.27
+[1m[92m  Downloaded[0m zeroize v1.9.1
+[1m[92m  Downloaded[0m chacha20 v0.9.1
+[1m[92m  Downloaded[0m cpufeatures v0.3.1
+[1m[92m  Downloaded[0m num-traits v0.2.19
+[1m[92m  Downloaded[0m plotters-backend v0.3.7
+[1m[92m  Downloaded[0m proc-macro-error2 v2.0.1
+[1m[92m  Downloaded[0m serde_json v1.0.154
+[1m[92m  Downloaded[0m tinyvec v1.13.3
+[1m[92m  Downloaded[0m tls_codec v0.5.0
+[1m[92m  Downloaded[0m toml_edit v0.25.19+spec-1.1.0
+[1m[92m  Downloaded[0m criterion-plot v0.5.0
+[1m[92m  Downloaded[0m fastrand v2.5.0
+[1m[92m  Downloaded[0m password-hash v0.5.0
+[1m[92m  Downloaded[0m rand_xorshift v0.5.0
+[1m[92m  Downloaded[0m cfg-if v1.0.5
+[1m[92m  Downloaded[0m cfg_aliases v0.2.2
+[1m[92m  Downloaded[0m serde v1.0.229
+[1m[92m  Downloaded[0m typenum v1.20.1
+[1m[92m  Downloaded[0m oorandom v11.1.5
+[1m[92m  Downloaded[0m zerocopy-derive v0.8.63
+[1m[92m  Downloaded[0m clap v4.6.7
+[1m[92m  Downloaded[0m generic-array v0.14.7
+[1m[92m  Downloaded[0m libcrux-traits v0.0.9
+[1m[92m  Downloaded[0m libcrux-intrinsics v0.0.9
+[1m[92m  Downloaded[0m winnow v1.0.5
+[1m[92m  Downloaded[0m chacha20 v0.10.2
+[1m[92m  Downloaded[0m getrandom v0.2.17
+[1m[92m  Downloaded[0m quote v1.0.47
+[1m[92m  Downloaded[0m derive_more v2.1.1
+[1m[92m  Downloaded[0m getrandom v0.4.3
+[1m[92m  Downloaded[0m libcrux-sha3 v0.0.11
+[1m[92m  Downloaded[0m rand v0.10.3
+[1m[92m  Downloaded[0m regex v1.13.1
+[1m[92m  Downloaded[0m libcrux-ml-dsa v0.0.11
+[1m[92m  Downloaded[0m iai-callgrind-runner v0.16.1
+[1m[92m  Downloaded[0m hashbrown v0.17.1
+[1m[92m  Downloaded[0m proptest v1.12.0
+[1m[92m  Downloaded[0m syn v2.0.119
+[1m[92m  Downloaded[0m zerocopy v0.8.63
+[1m[92m  Downloaded[0m syn v3.0.9
+[1m[92m  Downloaded[0m regex-syntax v0.8.11
+[1m[92m  Downloaded[0m rustix v1.1.6
+[1m[92m  Downloaded[0m regex-automata v0.4.18
+[1m[92m  Downloaded[0m sha3 v0.10.9
+[1m[92m  Downloaded[0m libc v0.2.191
+[1m[92m  Downloaded[0m linux-raw-sys v0.12.1
+[1m[92m   Compiling[0m libc v0.2.191
+[1m[92m   Compiling[0m proc-macro2 v1.0.107
+[1m[92m   Compiling[0m unicode-ident v1.0.27
+[1m[92m   Compiling[0m quote v1.0.47
+[1m[92m   Compiling[0m cfg-if v1.0.5
+[1m[92m   Compiling[0m version_check v0.9.5
+[1m[92m   Compiling[0m generic-array v0.14.7
+[1m[92m   Compiling[0m typenum v1.20.1
+[1m[92m   Compiling[0m rand_core v0.10.1
+[1m[92m   Compiling[0m getrandom v0.4.3
+[1m[92m   Compiling[0m subtle v2.6.1
+[1m[92m   Compiling[0m cpufeatures v0.3.1
+[1m[92m   Compiling[0m once_cell v1.21.4
+[1m[92m   Compiling[0m serde_core v1.0.229
+[1m[92m   Compiling[0m syn v3.0.9
+[1m[92m   Compiling[0m syn v2.0.119
+[1m[92m   Compiling[0m chacha20 v0.10.2
+[1m[92m   Compiling[0m getrandom v0.2.17
+[1m[92m   Compiling[0m rand_core v0.6.4
+[1m[92m   Compiling[0m crypto-common v0.1.7
+[1m[92m   Compiling[0m winnow v1.0.5
+[1m[92m   Compiling[0m hashbrown v0.17.1
+[1m[92m   Compiling[0m equivalent v1.0.3
+[1m[92m   Compiling[0m indexmap v2.14.2
+[1m[92m   Compiling[0m toml_parser v1.1.5+spec-1.1.0
+[1m[92m   Compiling[0m rand v0.10.3
+[1m[92m   Compiling[0m block-buffer v0.10.4
+[1m[92m   Compiling[0m serde v1.0.229
+[1m[92m   Compiling[0m libcrux-intrinsics v0.0.9
+[1m[92m   Compiling[0m toml_datetime v1.1.3+spec-1.1.0
+[1m[92m   Compiling[0m zmij v1.0.23
+[1m[92m   Compiling[0m cpufeatures v0.2.17
+[1m[92m   Compiling[0m toml_edit v0.25.19+spec-1.1.0
+[1m[92m   Compiling[0m serde_derive v1.0.229
+[1m[92m   Compiling[0m digest v0.10.7
+[1m[92m   Compiling[0m inout v0.1.4
+[1m[92m   Compiling[0m libcrux-sha3 v0.0.11
+[1m[92m   Compiling[0m zeroize v1.9.1
+[1m[92m   Compiling[0m cfg_aliases v0.2.2
+[1m[92m   Compiling[0m libcrux-secrets v0.0.7
+[1m[92m   Compiling[0m serde_json v1.0.154
+[1m[92m   Compiling[0m libcrux-traits v0.0.9
+[1m[92m   Compiling[0m cipher v0.4.4
+[1m[92m   Compiling[0m borsh v1.8.1
+[1m[92m   Compiling[0m proc-macro-crate v3.5.0
+[1m[92m   Compiling[0m universal-hash v0.5.1
+[1m[92m   Compiling[0m libcrux-platform v0.0.4
+[1m[92m   Compiling[0m base64ct v1.8.3
+[1m[92m   Compiling[0m crossbeam-utils v0.8.23
+[1m[92m   Compiling[0m opaque-debug v0.3.1
+[1m[92m   Compiling[0m libcrux-ml-dsa v0.0.11
+[1m[92m   Compiling[0m itoa v1.0.18
+[1m[92m   Compiling[0m memchr v2.8.3
+[1m[92m   Compiling[0m poly1305 v0.8.0
+[1m[92m   Compiling[0m borsh-derive v1.8.1
+[1m[92m   Compiling[0m password-hash v0.5.0
+[1m[92m   Compiling[0m chacha20 v0.9.1
+[1m[92m   Compiling[0m blake2 v0.10.6
+[1m[92m   Compiling[0m libcrux-macros v0.0.4
+[1m[92m   Compiling[0m aead v0.5.2
+[1m[92m   Compiling[0m rtoolbox v0.0.6
+[1m[92m   Compiling[0m crossbeam-epoch v0.9.21
+[1m[92m   Compiling[0m autocfg v1.5.1
+[1m[92m   Compiling[0m keccak v0.1.6
+[1m[92m   Compiling[0m zerocopy v0.8.63
+[1m[92m   Compiling[0m sha3 v0.10.9
+[1m[92m   Compiling[0m rpassword v7.5.4
+[1m[92m   Compiling[0m num-traits v0.2.19
+[1m[92m   Compiling[0m chacha20poly1305 v0.10.1
+[1m[92m   Compiling[0m argon2 v0.5.3
+[1m[92m   Compiling[0m zerocopy-derive v0.8.63
+[1m[92m   Compiling[0m bs58 v0.5.1
+[1m[92m   Compiling[0m crossbeam-deque v0.8.8
+[1m[92m   Compiling[0m rustix v1.1.6
+[1m[92m   Compiling[0m either v1.19.0
+[1m[92m   Compiling[0m linux-raw-sys v0.12.1
+[1m[92m   Compiling[0m bitflags v2.13.2
+[1m[92m   Compiling[0m rayon-core v1.13.0
+[1m[92m   Compiling[0m regex-syntax v0.8.11
+[1m[92m   Compiling[0m token-postquantum v0.13.0 (/home/runner/work/Amalgam21-A21/Amalgam21-A21/core)
+[1m[92m   Compiling[0m fastrand v2.5.0
+[1m[92m   Compiling[0m clap_lex v1.1.1
+[1m[92m   Compiling[0m anstyle v1.0.14
+[1m[92m   Compiling[0m ciborium-io v0.2.2
+[1m[92m   Compiling[0m plotters-backend v0.3.7
+[1m[92m   Compiling[0m plotters-svg v0.3.7
+[1m[92m   Compiling[0m clap_builder v4.6.7
+[1m[92m   Compiling[0m tempfile v3.27.0
+[1m[92m   Compiling[0m regex-automata v0.4.18
+[1m[92m   Compiling[0m half v2.7.1
+[1m[92m   Compiling[0m ciborium-ll v0.2.2
+[1m[92m   Compiling[0m itertools v0.10.5
+[1m[92m   Compiling[0m derive_more-impl v2.1.1
+[1m[92m   Compiling[0m wait-timeout v0.2.1
+[1m[92m   Compiling[0m quick-error v1.2.3
+[1m[92m   Compiling[0m fnv v1.0.7
+[1m[92m   Compiling[0m same-file v1.0.6
+[1m[92m   Compiling[0m bit-vec v0.10.1
+[1m[92m   Compiling[0m cast v0.3.0
+[1m[92m   Compiling[0m walkdir v2.5.0
+[1m[92m   Compiling[0m rusty-fork v0.3.1
+[1m[92m   Compiling[0m bit-set v0.11.1
+[1m[92m   Compiling[0m criterion-plot v0.5.0
+[1m[92m   Compiling[0m regex v1.13.1
+[1m[92m   Compiling[0m clap v4.6.7
+[1m[92m   Compiling[0m ciborium v0.2.2
+[1m[92m   Compiling[0m rayon v1.12.0
+[1m[92m   Compiling[0m plotters v0.3.7
+[1m[92m   Compiling[0m tinytemplate v1.2.1
+[1m[92m   Compiling[0m is-terminal v0.4.17
+[1m[92m   Compiling[0m proc-macro-error-attr2 v2.0.0
+[1m[92m   Compiling[0m rand_xorshift v0.5.0
+[1m[92m   Compiling[0m core_detect v1.0.0
+[1m[92m   Compiling[0m unarray v0.1.4
+[1m[92m   Compiling[0m anes v0.1.6
+[1m[92m   Compiling[0m oorandom v11.1.5
+[1m[92m   Compiling[0m iai-callgrind-runner v0.16.1
+[1m[92m   Compiling[0m proptest v1.12.0
+[1m[92m   Compiling[0m proc-macro-error2 v2.0.1
+[1m[92m   Compiling[0m derive_more v2.1.1
+[1m[92m   Compiling[0m iai-callgrind v0.16.1
+[1m[92m   Compiling[0m criterion v0.5.1
+[1m[92m   Compiling[0m iai-callgrind-macros v0.6.1
+[1m[92m   Compiling[0m bincode v1.3.3
+[1m[92m   Compiling[0m token-postquantum-export v0.13.0 (/home/runner/work/Amalgam21-A21/Amalgam21-A21/export)
+[1m[92m   Compiling[0m amg21-stress v0.12.0 (/home/runner/work/Amalgam21-A21/Amalgam21-A21/stress)
+[1m[92m    Finished[0m `dev` profile [unoptimized + debuginfo] target(s) in 33.32s
+[1m[33mwarning[0m: the following packages contain code that will be rejected by a future version of Rust: proc-macro-error2 v2.0.1
+[1m[92mnote[0m: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+----
+[1m[92m    Finished[0m `test` profile [unoptimized + debuginfo] target(s) in 0.08s
+[1m[33mwarning[0m: the following packages contain code that will be rejected by a future version of Rust: proc-macro-error2 v2.0.1
+[1m[92mnote[0m: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+[1m[92m     Running[0m unittests src/main.rs (target/debug/deps/amg21_stress-648d9ff5a4ba3250)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+[1m[92m     Running[0m unittests src/lib.rs (target/debug/deps/token_postquantum-8a78b48ed821c4ec)
+
+running 27 tests
+test tests::address_encoding_roundtrip_and_checksum ... ok
+test tests::airdrop_first_wallets_then_cap ... FAILED
+test tests::checkpoint_rotation_and_reopen ... FAILED
+test tests::apply_block_rollback_restores_state_byte_identical ... FAILED
+test tests::checkpoint_tampered_rejected ... FAILED
+test tests::config_mismatch_rejected ... FAILED
+test tests::combined_rollback_rejected ... FAILED
+test tests::double_nonce_same_block_rejected ... FAILED
+test tests::claim_creates_missing_account ... FAILED
+test tests::empty_log_reinitialized_not_tamper ... FAILED
+test tests::empty_log_with_journal_entries_blocked ... FAILED
+test tests::fee_routing_and_pool_exhaustion ... FAILED
+test tests::erc20_facade_semantics ... FAILED
+test tests::header_only_log_reinitialized_fresh ... FAILED
+test tests::forged_transfer_signature_rejected ... FAILED
+test tests::genesis_hash_binds_identities_and_collision_rejected ... ok
+test tests::forged_transfer_after_claim_same_block_rejected ... FAILED
+test tests::replay_rejected ... FAILED
+test tests::journal_rejects_bad_publish_and_repairs_torn_tail ... FAILED
+test tests::open_independent_rejects_same_device ... FAILED
+test tests::journal_duplicate_only_at_tail ... FAILED
+test tests::short_log_rejected_as_tamper ... ok
+test tests::wallet_rejects_permissive_kdf_params ... ok
+test tests::tampered_log_rejected ... FAILED
+test tests::rollback_stale_log_blocked ... FAILED
+test tests::transfer_from_unclaimed_rejected ... FAILED
+test tests::wallet_roundtrip ... ok
+
+failures:
+
+---- tests::airdrop_first_wallets_then_cap stdout ----
+
+thread 'tests::airdrop_first_wallets_then_cap' (4713) panicked at core/src/tests.rs:289:86:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidInput, error: "creating or truncating a file requires write or append access" })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- tests::checkpoint_rotation_and_reopen stdout ----
+
+thread 'tests::checkpoint_rotation_and_reopen' (4715) panicked at core/src/tests.rs:778:90:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidInput, error: "creating or truncating a file requires write or append access" })
+
+---- tests::apply_block_rollback_restores_state_byte_identical stdout ----
+
+thread 'tests::apply_block_rollback_restores_state_byte_identical' (4714) panicked at core/src/tests.rs:741:86:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidInput, error: "creating or truncating a file requires write or append access" })
+
+---- tests::checkpoint_tampered_rejected stdout ----
+
+thread 'tests::checkpoint_tampered_rejected' (4716) panicked at core/src/tests.rs:868:90:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidInput, error: "creating or truncating a file requires write or append access" })
+
+---- tests::config_mismatch_rejected stdout ----
+
+thread 'tests::config_mismatch_rejected' (4719) panicked at core/src/tests.rs:175:86:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidInput, error: "creating or truncating a file requires write or append access" })
+
+---- tests::combined_rollback_rejected stdout ----
+
+thread 'tests::combined_rollback_rejected' (4718) panicked at core/src/tests.rs:233:86:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidInput, error: "creating or truncating a file requires write or append access" })
+
+---- tests::double_nonce_same_block_rejected stdout ----
+
+thread 'tests::double_nonce_same_block_rejected' (4720) panicked at core/src/tests.rs:144:86:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidInput, error: "creating or truncating a file requires write or append access" })
+
+---- tests::claim_creates_missing_account stdout ----
+
+thread 'tests::claim_creates_missing_account' (4717) panicked at core/src/tests.rs:61:86:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidInput, error: "creating or truncating a file requires write or append access" })
+
+---- tests::empty_log_reinitialized_not_tamper stdout ----
+
+thread 'tests::empty_log_reinitialized_not_tamper' (4721) panicked at core/src/tests.rs:590:82:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidInput, error: "creating or truncating a file requires write or append access" })
+
+---- tests::empty_log_with_journal_entries_blocked stdout ----
+
+thread 'tests::empty_log_with_journal_entries_blocked' (4722) panicked at core/src/tests.rs:604:90:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidInput, error: "creating or truncating a file requires write or append access" })
+
+---- tests::fee_routing_and_pool_exhaustion stdout ----
+
+thread 'tests::fee_routing_and_pool_exhaustion' (4724) panicked at core/src/tests.rs:325:76:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidInput, error: "creating or truncating a file requires write or append access" })
+
+---- tests::erc20_facade_semantics stdout ----
+
+thread 'tests::erc20_facade_semantics' (4723) panicked at core/src/tests.rs:642:86:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidInput, error: "creating or truncating a file requires write or append access" })
+
+---- tests::header_only_log_reinitialized_fresh stdout ----
+
+thread 'tests::header_only_log_reinitialized_fresh' (4728) panicked at core/src/tests.rs:1025:86:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidInput, error: "creating or truncating a file requires write or append access" })
+
+---- tests::forged_transfer_signature_rejected stdout ----
+
+thread 'tests::forged_transfer_signature_rejected' (4726) panicked at core/src/tests.rs:669:86:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidInput, error: "creating or truncating a file requires write or append access" })
+
+---- tests::forged_transfer_after_claim_same_block_rejected stdout ----
+
+thread 'tests::forged_transfer_after_claim_same_block_rejected' (4725) panicked at core/src/tests.rs:690:86:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidInput, error: "creating or truncating a file requires write or append access" })
+
+---- tests::replay_rejected stdout ----
+
+thread 'tests::replay_rejected' (4732) panicked at core/src/tests.rs:162:86:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidInput, error: "creating or truncating a file requires write or append access" })
+
+---- tests::journal_rejects_bad_publish_and_repairs_torn_tail stdout ----
+
+thread 'tests::journal_rejects_bad_publish_and_repairs_torn_tail' (4730) panicked at core/src/tests.rs:416:90:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidInput, error: "creating or truncating a file requires write or append access" })
+
+---- tests::open_independent_rejects_same_device stdout ----
+
+thread 'tests::open_independent_rejects_same_device' (4731) panicked at core/src/tests.rs:1009:82:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidInput, error: "creating or truncating a file requires write or append access" })
+
+---- tests::journal_duplicate_only_at_tail stdout ----
+
+thread 'tests::journal_duplicate_only_at_tail' (4729) panicked at core/src/tests.rs:521:90:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidInput, error: "creating or truncating a file requires write or append access" })
+
+---- tests::tampered_log_rejected stdout ----
+
+thread 'tests::tampered_log_rejected' (4735) panicked at core/src/tests.rs:201:86:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidInput, error: "creating or truncating a file requires write or append access" })
+
+---- tests::rollback_stale_log_blocked stdout ----
+
+thread 'tests::rollback_stale_log_blocked' (4733) panicked at core/src/tests.rs:927:90:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidInput, error: "creating or truncating a file requires write or append access" })
+
+---- tests::transfer_from_unclaimed_rejected stdout ----
+
+thread 'tests::transfer_from_unclaimed_rejected' (4736) panicked at core/src/tests.rs:121:86:
+called `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidInput, error: "creating or truncating a file requires write or append access" })
+
+
+failures:
+    tests::airdrop_first_wallets_then_cap
+    tests::apply_block_rollback_restores_state_byte_identical
+    tests::checkpoint_rotation_and_reopen
+    tests::checkpoint_tampered_rejected
+    tests::claim_creates_missing_account
+    tests::combined_rollback_rejected
+    tests::config_mismatch_rejected
+    tests::double_nonce_same_block_rejected
+    tests::empty_log_reinitialized_not_tamper
+    tests::empty_log_with_journal_entries_blocked
+    tests::erc20_facade_semantics
+    tests::fee_routing_and_pool_exhaustion
+    tests::forged_transfer_after_claim_same_block_rejected
+    tests::forged_transfer_signature_rejected
+    tests::header_only_log_reinitialized_fresh
+    tests::journal_duplicate_only_at_tail
+    tests::journal_rejects_bad_publish_and_repairs_torn_tail
+    tests::open_independent_rejects_same_device
+    tests::replay_rejected
+    tests::rollback_stale_log_blocked
+    tests::tampered_log_rejected
+    tests::transfer_from_unclaimed_rejected
+
+test result: FAILED. 5 passed; 22 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.56s
+
+[1m[91merror[0m: test failed, to rerun pass `-p token-postquantum --lib`
