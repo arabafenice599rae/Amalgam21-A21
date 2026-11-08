@@ -15,8 +15,9 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+# Nessun job di questo workflow scrive nel repository: sola lettura.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   deny:

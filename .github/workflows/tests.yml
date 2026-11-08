@@ -13,13 +13,17 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+# Principio del minimo privilegio: lettura per impostazione predefinita;
+# la scrittura e' concessa solo al job che pubblica la diagnostica.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   nextest:
     name: nextest (test paralleli + property testing)
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
