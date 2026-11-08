@@ -181,12 +181,8 @@ pub use types::{
 pub use util::{fmt_amount, hex, os_random};
 pub use wallet::{address_of, decode_address, encode_address, Wallet};
 
-// Riesporti interni: ciascun modulo vede gli altri tramite `use crate::*`.
-pub(crate) use anchor::*;
+// Riesporti interni (solo i moduli con elementi liberi pub(crate)): i moduli
+// vedono gli altri tramite `use crate::*`.
 pub(crate) use consts::*;
-pub(crate) use error::*;
-pub(crate) use ledger::*;
-pub(crate) use state::*;
-pub(crate) use types::*;
 pub(crate) use util::*;
 pub(crate) use wallet::*;
