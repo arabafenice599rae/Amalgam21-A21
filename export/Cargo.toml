@@ -2,12 +2,11 @@
 name = "token-postquantum-export"
 version = "0.12.0"
 edition = "2021"
-description = "Crate di esportazione (snapshot JSON + indice JSONL) per explorer e indexer esterni"
+description = "Esportazione JSON/JSONL per explorer e indexer: vista derivata, non autoritativa"
+publish = false
 
 [dependencies]
-token-postquantum = { path = "../core" }          # nucleo (path)
-serde = { version = "1", features = ["derive"] }  # standard de facto
-# NON abilitare MAI la feature "preserve_order" di serde_json:
-# la canonicalizzazione JSON richiede Map = BTreeMap (chiavi ordinate).
+token-postquantum = { path = "../core" }
+serde = { version = "1", features = ["derive"] }  # NON abilitare mai la feature preserve_order di serde_json
 serde_json = "1"
-sha3 = "0.10"                                     # SHAKE256-512, come il core
+sha3 = "0.10"

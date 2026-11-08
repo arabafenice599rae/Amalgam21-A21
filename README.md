@@ -1,42 +1,35 @@
-# Amalgam21-A21
+# Amalgam21 Token (A21)
 
-Token digitale proprietario post-quantum — prototipo **v0.12**.
+Token digitale proprietario post-quantum: firme ML-DSA-65 (FIPS 204, livello 3 NIST),
+hash SHAKE256 a 512 bit, ledger autoritario a firmatario unico, wallet non-custodial
+(Argon2id + XChaCha20-Poly1305).
 
-Firma ML-DSA-65 (FIPS 204, livello di sicurezza NIST 3) e hash SHAKE256 con output a 512 bit (~2^256 preimage, ~2^170 collision anche contro avversari quantistici). Nessun formato binario è mai cambiato dalla v0.8.
+## Struttura del workspace
 
-## Struttura del repository
+- core/ — crate token-postquantum: nucleo del ledger (formati, wallet, conti, blocchi,
+  anchor, journal, facciata ERC-20-like) e demo end-to-end.
+- export/ — crate token-postquantum-export: snapshot JSON dei saldi e indice JSONL
+  dei blocchi per explorer e indexer; vista derivata, non autoritativa.
 
-Workspace Cargo a due crate:
+## Comandi
 
-| Crate | Contenuto |
-| --- | --- |
-| `core/` | `token-postquantum`: nucleo (`src/lib.rs`) + demo end-to-end (`src/main.rs`, binario `token-postquantum`) |
-| `export/` | `token-postquantum-export`: snapshot JSON dei saldi e indice JSONL dei blocchi per explorer e indexer esterni |
+    cargo build --workspace
+    cargo test --workspace
+    cargo run -p token-postquantum   # demo interattiva (passphrase via prompt)
 
-## Compilazione e verifica
+## CI (GitHub Actions)
 
-```bash
-cargo build
-cargo test
-```
+A ogni push e pull request: cargo fmt --check, cargo clippy -D warnings, build, test
+e cargo audit (vulnerabilita' note delle dipendenze). I controlli sono job separati:
+il fallimento di uno non nasconde gli esiti degli altri.
 
-Demo interattiva (la passphrase dei wallet è richiesta con prompt senza eco; la variabile d'ambiente `AMG_PASSPHRASE` è stata eliminata):
+## Modello dichiarato
 
-```bash
-cargo run -p token-postquantum
-```
+- Supply 100M token, 6 decimali; importi in unita' intere u64, mai virgola mobile.
+- Fee fissa, intera, al conto di sistema; cashback 90% dal pool dedicato.
+- Nessun formato binario cambia dalla v0.8.
+- Dichiarazioni di sicurezza e limitazioni: intestazioni dei sorgenti.
 
-## CI
+## Licenza
 
-Il workflow `.github/workflows/rust.yml` esegue `cargo build` e `cargo test` a ogni push e pull request su `main`. Si raccomanda inoltre `cargo audit` (vedi il pin di `libcrux-ml-dsa` in `core/Cargo.toml`).
-
-## Note di sicurezza (estratto)
-
-- Gli hash interni usano SHAKE256-512: preimage ~2^256, collision ~2^170 contro attacchi quantistici (Grover / Brassard-Høyer-Tapp). "Post-quantum" indica primitive senza riduzioni note via Shor/Grover, non sicurezza assoluta.
-- `export_hash` e `index_hash` nel crate `export` sono checksum di integrità SHAKE256-512 NON autenticati: la provenienza si attesta solo sul log firmato ML-DSA-65 del core.
-- Il journal "esterno" su filesystem locale non fornisce indipendenza reale: l'indipendenza è una proprietà dell'endpoint (WORM/notarizzazione), non del codice.
-- Limitazioni dichiarate (checkpoint/rotazione log rimandati a v0.13, mlock, fee sui claim, bridge EVM): vedere gli header dei sorgenti per l'elenco completo.
-
-## Avvertenze
-
-Prototipo a propositore unico, non revisionato con audit indipendente e non adatto a gestire valore reale.
+Copyright Amalgam21. Tutti i diritti riservati. Nessuna licenza d'uso concessa.

@@ -2,15 +2,16 @@
 name = "token-postquantum"
 version = "0.12.0"
 edition = "2021"
-description = "Token digitale proprietario post-quantum (ML-DSA-65, SHAKE256-512): prototipo v0.12"
+description = "Token digitale proprietario post-quantum: ML-DSA-65, SHAKE256-512, ledger autoritario a firmatario unico"
+publish = false
 
 [dependencies]
 sha3 = "0.10"              # RustCrypto SHA-3/SHAKE256 (auditato)
-libcrux-ml-dsa = "0.0.11"  # ML-DSA-65, FIPS 204 (Cryspen); pin patchato per RUSTSEC-2026-0077 (versioni <=0.0.7)
+libcrux-ml-dsa = "0.0.11"  # ML-DSA-65, FIPS 204 (Cryspen); pin patchato per RUSTSEC-2026-0077
 borsh = "1"                # serializzazione canonica deterministica (auditata)
-bs58 = "0.5"               # base58
+bs58 = "0.5"               # base58; nessun audit formale noto
 rand = "0.10"              # sola entropia OS (TryRngCore)
 chacha20poly1305 = "0.10"  # AEAD XChaCha20-Poly1305 (RustCrypto, auditato)
 argon2 = "0.5"             # KDF Argon2id (RustCrypto, PHC winner)
 zeroize = "1"              # azzeramento sicuro dei segreti in memoria
-rpassword = "7"            # prompt passphrase senza eco (demo)
+rpassword = "7"            # prompt passphrase senza eco (solo binario demo)
