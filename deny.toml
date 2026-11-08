@@ -1,0 +1,41 @@
+# cargo-deny — configurazione licenze, advisory, ban e sorgenti
+# Documentazione: https://embarkstudios.github.io/cargo-deny/
+
+[graph]
+all-features = true
+
+[advisories]
+version = 2
+yanked = "warn"
+
+[licenses]
+version = 2
+# Il repository Amalgam21 è PROPRIETARIO (nessuna licenza d'uso concessa):
+# le dipendenze DEVONO essere permissive. Copyleft forte rifiutato.
+deny = ["GPL-2.0-only", "GPL-3.0-only", "AGPL-3.0-only"]
+allow = [
+    "MIT",
+    "MIT-0",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",
+    "CC0-1.0",
+    "MPL-2.0",
+    "CDLA-Permissive-2.0",
+    "0BSD",
+]
+unused-allowed-license = "warn"
+unlicensed = "warn"
+
+[bans]
+multiple-versions = "warn"
+highlight = "all"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

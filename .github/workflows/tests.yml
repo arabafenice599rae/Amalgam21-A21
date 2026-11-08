@@ -1,0 +1,53 @@
+name: Test intensivi
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      propcases:
+        description: "Casi proptest per proprieta' (default 256)"
+        default: "256"
+
+env:
+  CARGO_TERM_COLOR: always
+
+permissions:
+  contents: write
+
+jobs:
+  nextest:
+    name: nextest (test paralleli + property testing)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Installazione cargo-nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+      - name: Test
+        shell: bash
+        env:
+          PROPCASES: ${{ github.event.inputs.propcases || '256' }}
+        run: |
+          set -o pipefail
+          cargo nextest run --workspace 2>&1 | tee diag-nextest.log
+      - name: Pubblica diagnostica su ramo dati
+        if: failure()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          BRANCH="diag/nextest"
+          git switch -c "$BRANCH"
+          mkdir -p diag
+          {
+            echo "commit: ${{ github.sha }}"
+            echo "run: ${{ github.run_id }}"
+            echo
+            cat diag-nextest.log
+          } > "diag/nextest.log"
+          git add diag
+          git commit -m "diag: nextest @ ${{ github.sha }} [skip ci]"
+          git push --force origin "$BRANCH"

@@ -1,0 +1,44 @@
+name: Fuzzing
+
+on:
+  schedule:
+    - cron: "0 3 * * 6" # sabato, 5 minuti per target
+  workflow_dispatch:
+    inputs:
+      seconds:
+        description: "Secondi di fuzzing per target (default 300)"
+        default: "300"
+
+env:
+  CARGO_TERM_COLOR: always
+
+permissions:
+  contents: read
+
+jobs:
+  fuzz:
+    name: libFuzzer (parser borsh)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@nightly
+      - name: Installazione cargo-fuzz
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-fuzz
+      - name: Fuzz parse_record
+        run: |
+          cd fuzz
+          cargo fuzz run parse_record -- -max_total_time=${{ github.event.inputs.seconds || '300' }}
+      - name: Fuzz parse_block
+        run: |
+          cd fuzz
+          cargo fuzz run parse_block -- -max_total_time=${{ github.event.inputs.seconds || '300' }}
+      - name: Pubblica artefatti in caso di crash
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-crash
+          path: fuzz/artifacts/
+          retention-days: 30

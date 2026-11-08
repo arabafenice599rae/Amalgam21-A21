@@ -1,0 +1,81 @@
+name: Sicurezza statica
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 4 * * 1" # settimanale
+  workflow_dispatch:
+    inputs:
+      mutants:
+        description: "Eseguire cargo-mutants (LENTO: puo' durare ore)"
+        type: boolean
+        default: false
+
+env:
+  CARGO_TERM_COLOR: always
+
+permissions:
+  contents: write
+
+jobs:
+  deny:
+    name: cargo-deny (licenze, advisory, ban, sorgenti)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Installazione cargo-deny
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny
+      # Non bloccante finché l'allowlist delle licenze non è stabilizzata
+      # sulle dipendenze transitive di proptest/criterion: da rendere
+      # bloccante dopo il primo report.
+      - name: Verifica licenze, advisory e sorgenti
+        continue-on-error: true
+        run: cargo deny --workspace check
+
+  geiger:
+    name: cargo-geiger (unsafe)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Installazione cargo-geiger
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-geiger
+      # Inventario del codice unsafe: informativo, non bloccante.
+      - name: Inventario unsafe
+        run: cargo geiger --workspace
+
+  miri:
+    name: Miri (comportamento non definito)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: miri
+      # NON bloccante: libcrux-ml-dsa usa intrinsics/asm che Miri non
+      # supporta appieno; il job registra i limiti finché non lo farà.
+      - name: Miri sul crate export (nessuna firma, sola lettura)
+        continue-on-error: true
+        env:
+          MIRIFLAGS: -Zmiri-disable-isolation
+        run: cargo miri test -p token-postquantum-export
+
+  mutants:
+    name: cargo-mutants (qualita' dei test)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && inputs.mutants
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Installazione cargo-mutants
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-mutants
+      - name: Mutation testing sul core
+        run: cargo mutants --package token-postquantum --in-place

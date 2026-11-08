@@ -1,0 +1,9 @@
+[package]
+name = "amg21-stress"
+version = "0.12.0"
+edition = "2021"
+description = "Harness di carico per il ledger Amalgam21: generazione e sottomissione massive di transazioni firmate ML-DSA-65"
+publish = false
+
+[dependencies]
+token-postquantum = { path = "../core" }

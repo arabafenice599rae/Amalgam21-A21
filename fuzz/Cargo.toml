@@ -1,0 +1,23 @@
+[package]
+name = "amg21-fuzz"
+version = "0.12.0"
+edition = "2021"
+description = "Fuzzing dei parser del ledger (cargo-fuzz / libFuzzer)"
+publish = false
+
+# Crate FUORI dal workspace principale: cargo-fuzz richiede la toolchain
+# nightly e libfuzzer-sys; non deve entrare nelle build stabili della CI.
+[workspace]
+
+[dependencies]
+libfuzzer-sys = "0.4"
+token-postquantum = { path = "../core" }
+borsh = "1"
+
+[[bin]]
+name = "parse_record"
+path = "fuzz_targets/parse_record.rs"
+
+[[bin]]
+name = "parse_block"
+path = "fuzz_targets/parse_block.rs"

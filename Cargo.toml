@@ -1,3 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["core", "export"]
+members = ["core", "export", "stress"]
+
+# NOTA: fuzz/ è un crate SEPARATO con il proprio [workspace] interno:
+# cargo-fuzz richiede nightly e non deve entrare nel workspace stabile.

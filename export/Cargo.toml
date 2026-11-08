@@ -10,3 +10,11 @@ token-postquantum = { path = "../core" }
 serde = { version = "1", features = ["derive"] }  # NON abilitare mai la feature preserve_order di serde_json
 serde_json = "1"
 sha3 = "0.10"
+
+[dev-dependencies]
+proptest = "1"
+criterion = "0.5"
+
+[[bench]]
+name = "export"
+harness = false

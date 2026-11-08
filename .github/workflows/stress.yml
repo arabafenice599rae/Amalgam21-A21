@@ -1,0 +1,66 @@
+name: Stress
+
+on:
+  schedule:
+    - cron: "0 2 * * *" # notturno: livello 1 (100K tx)
+    - cron: "0 2 * * 0" # domenicale: livello 2 (1M tx)
+  workflow_dispatch:
+    inputs:
+      level:
+        description: "Livello di carico (1=100K, 2=1M, 3=10M a shard, 4=50M a shard)"
+        default: "1"
+
+env:
+  CARGO_TERM_COLOR: always
+
+permissions:
+  contents: read
+
+jobs:
+  stress:
+    name: Stress ${{ matrix.shard }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        # Livelli 3 e 4: carico diviso in shard paralleli da 1M di tx ciascuno.
+        shard: ${{ fromJson(inputs.level == '3' && '["s0","s1","s2","s3","s4","s5","s6","s7","s8","s9"]' || inputs.level == '4' && '["s0","s1","s2","s3","s4","s5","s6","s7","s8","s9","s10","s11","s12","s13","s14","s15","s16","s17","s18","s19","s20","s21","s22","s23","s24","s25","s26","s27","s28","s29","s30","s31","s32","s33","s34","s35","s36","s37","s38","s39","s40","s41","s42","s43","s44","s45","s46","s47","s48","s49"]' || '["s0"]') }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Livello di carico
+        id: level
+        run: |
+          if [ -n "${{ inputs.level }}" ]; then
+            LEVEL="${{ inputs.level }}"
+          elif [ "${{ github.event.schedule }}" = "0 2 * * 0" ]; then
+            LEVEL="2"
+          else
+            LEVEL="1"
+          fi
+          case "$LEVEL" in
+            1) TXS=100000 ;;
+            2) TXS=1000000 ;;
+            3) TXS=1000000 ;;
+            4) TXS=1000000 ;;
+            *) TXS=100000 ;;
+          esac
+          echo "txs=$TXS" >> "$GITHUB_OUTPUT"
+      - name: Compilazione release
+        run: cargo build --release -p amg21-stress
+      - name: Esecuzione
+        shell: bash
+        run: |
+          set -o pipefail
+          ./target/release/amg21-stress \
+            --txs "${{ steps.level.outputs.txs }}" \
+            --episode-txs 100000 \
+            --dir "$RUNNER_TEMP/amg21-stress-${{ matrix.shard }}" 2>&1 | tee stress-${{ matrix.shard }}.log
+      - name: Pubblica log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stress-${{ matrix.shard }}
+          path: stress-${{ matrix.shard }}.log
+          retention-days: 14

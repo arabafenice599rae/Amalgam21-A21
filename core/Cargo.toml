@@ -15,3 +15,19 @@ chacha20poly1305 = "0.10"  # AEAD XChaCha20-Poly1305 (RustCrypto, auditato)
 argon2 = "0.5"             # KDF Argon2id (RustCrypto, PHC winner)
 zeroize = "1"              # azzeramento sicuro dei segreti in memoria
 rpassword = "7"            # prompt passphrase senza eco (solo binario demo)
+
+[dev-dependencies]
+proptest = "1"             # property testing; mantenuto da proptest-rs, ampiamente adottato
+criterion = "0.5"          # benchmark statistici; standard de facto in Rust
+
+[[bench]]
+name = "ledger"
+harness = false
+
+[[bench]]
+name = "signatures"
+harness = false
+
+[[bench]]
+name = "persistence"
+harness = false
