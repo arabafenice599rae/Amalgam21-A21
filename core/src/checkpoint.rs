@@ -53,7 +53,7 @@ pub(crate) fn write(
     canonical.extend_from_slice(&borsh::to_vec(&body).map_err(|_| LedgerError::Overflow)?);
     let sig = node.sign(&canonical, CKPT_CONTEXT);
     canonical.extend_from_slice(&sig);
-    atomic_write(path, &canonical)
+    Ok(atomic_write(path, &canonical)?)
 }
 
 /// Legge e verifica il checkpoint: la firma ML-DSA-65 del nodo è verificata

@@ -63,9 +63,10 @@
 //   5. MLOCK DEI SEGRETI (unix, best-effort): seed e signing key sono
 //      spostati su HEAP BOXED (indirizzo stabile agli spostamenti) e le
 //      loro pagine sono bloccate in RAM con libc::mlock (standard de
-//      facto, rust-lang). Il Drop sblocca PRIMA dell'azzeramento zeroize.
-//      Errori ignorati di proposito: ambiente senza privilegio resta
-//      utilizzabile; zeroize resta la difesa primaria.
+//      facto, rust-lang). Il Drop sblocca PRIMA di azzerare (zeroize
+//      esplicito) e deallocare. Errori di lock ignorati di proposito:
+//      ambiente senza privilegio resta utilizzabile; l'azzeramento
+//      resta la difesa primaria.
 //   6. RECOVERY POST-ROTAZIONE: log VUOTO + checkpoint = stato legittimo
 //      (prima: "log vuoto + journal non vuoto = incoerente" era l'unico
 //      caso). La monotonia journal >= checkpoint è verificata all'apertura.
@@ -165,8 +166,9 @@
 //     multipartito sarebbe un vettore di spam da rivalutare.
 //   - La copia della signing key imposta PER VALORE dall'API libcrux
 //     (MLDSA65SigningKey::new) NON è azzerabile dopo la firma (nessun
-//     Drop noto nel crate); il segreto longevo resta in Zeroizing per
-//     l'intera vita del wallet. Vedi Wallet::sign.
+//     Drop noto nel crate); i segreti longevi vivono su heap e sono
+//     azzerati ESPPLICITAMENTE al rilascio del wallet (Drop). Vedi
+//     Wallet::sign.
 //   - La facciata ERC-20-like è parità SEMANTICA di lettura, NON
 //     compatibilità di protocollo EVM. L'interoperabilità reale richiede un
 //     bridge esterno: componente separato, non implementato.
@@ -222,6 +224,3 @@ pub use wallet::{address_of, decode_address, encode_address, Wallet};
 pub(crate) use consts::*;
 pub(crate) use util::*;
 pub(crate) use wallet::*;
-
-// checkpoint: elemento liberi pub(crate) usati da ledger via `use crate::*`.
-pub(crate) use checkpoint::*;
