@@ -49,8 +49,11 @@ fn open_append(path: &Path) -> Result<File, LedgerError> {
 /// crash durante l'apertura) e nessun checkpoint => il log è NUOVO, va
 /// riscritto da zero con truncate per non accumulare header doppi.
 fn open_fresh(path: &Path) -> Result<File, LedgerError> {
+    // write+create+truncate: combinazione canonica (append+truncate è
+    // rifiutata dalla std). Le scritture successive avvengono in sequenza
+    // sullo STESSO handle, quindi O_APPEND non è necessario.
     let mut o = OpenOptions::new();
-    o.create(true).append(true).truncate(true);
+    o.write(true).create(true).truncate(true);
     #[cfg(unix)]
     {
         use std::os::unix::fs::OpenOptionsExt;
