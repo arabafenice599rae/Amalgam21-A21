@@ -1,0 +1,354 @@
+commit: 87286cdeda0d8e6bd9764cf4eb05c67c5fa523fa
+run: 42499833592
+
+[1m[92m    Updating[0m crates.io index
+[1m[92m Downloading[0m crates ...
+[1m[92m  Downloaded[0m anstyle v1.0.14
+[1m[92m  Downloaded[0m anes v0.1.6
+[1m[92m  Downloaded[0m argon2 v0.5.3
+[1m[92m  Downloaded[0m cfg_aliases v0.2.2
+[1m[92m  Downloaded[0m aead v0.5.2
+[1m[92m  Downloaded[0m cfg-if v1.0.5
+[1m[92m  Downloaded[0m clap_lex v1.1.1
+[1m[92m  Downloaded[0m cast v0.3.0
+[1m[92m  Downloaded[0m inout v0.1.4
+[1m[92m  Downloaded[0m ciborium-ll v0.2.2
+[1m[92m  Downloaded[0m tinytemplate v1.2.1
+[1m[92m  Downloaded[0m chacha20 v0.9.1
+[1m[92m  Downloaded[0m keccak v0.1.6
+[1m[92m  Downloaded[0m crypto-common v0.1.7
+[1m[92m  Downloaded[0m fnv v1.0.7
+[1m[92m  Downloaded[0m cpufeatures v0.2.17
+[1m[92m  Downloaded[0m equivalent v1.0.3
+[1m[92m  Downloaded[0m bincode v1.3.3
+[1m[92m  Downloaded[0m core_detect v1.0.0
+[1m[92m  Downloaded[0m generic-array v0.14.7
+[1m[92m  Downloaded[0m plotters-svg v0.3.7
+[1m[92m  Downloaded[0m quick-error v1.2.3
+[1m[92m  Downloaded[0m block-buffer v0.10.4
+[1m[92m  Downloaded[0m errno v0.3.14
+[1m[92m  Downloaded[0m rand_xorshift v0.5.0
+[1m[92m  Downloaded[0m rustc_version v0.4.1
+[1m[92m  Downloaded[0m is-terminal v0.4.17
+[1m[92m  Downloaded[0m itoa v1.0.18
+[1m[92m  Downloaded[0m libcrux-intrinsics v0.0.9
+[1m[92m  Downloaded[0m libcrux-macros v0.0.4
+[1m[92m  Downloaded[0m ciborium-io v0.2.2
+[1m[92m  Downloaded[0m proc-macro-crate v3.5.0
+[1m[92m  Downloaded[0m rtoolbox v0.0.6
+[1m[92m  Downloaded[0m opaque-debug v0.3.1
+[1m[92m  Downloaded[0m plotters-backend v0.3.7
+[1m[92m  Downloaded[0m libcrux-platform v0.0.4
+[1m[92m  Downloaded[0m same-file v1.0.6
+[1m[92m  Downloaded[0m subtle v2.6.1
+[1m[92m  Downloaded[0m unarray v0.1.4
+[1m[92m  Downloaded[0m crossbeam-deque v0.8.8
+[1m[92m  Downloaded[0m libcrux-secrets v0.0.7
+[1m[92m  Downloaded[0m proc-macro-error-attr2 v2.0.0
+[1m[92m  Downloaded[0m bitflags v2.13.2
+[1m[92m  Downloaded[0m chacha20 v0.10.2
+[1m[92m  Downloaded[0m ciborium v0.2.2
+[1m[92m  Downloaded[0m criterion-plot v0.5.0
+[1m[92m  Downloaded[0m either v1.19.0
+[1m[92m  Downloaded[0m fastrand v2.5.0
+[1m[92m  Downloaded[0m bit-set v0.11.1
+[1m[92m  Downloaded[0m cipher v0.4.4
+[1m[92m  Downloaded[0m cpufeatures v0.3.1
+[1m[92m  Downloaded[0m digest v0.10.7
+[1m[92m  Downloaded[0m iai-callgrind-macros v0.6.1
+[1m[92m  Downloaded[0m libcrux-traits v0.0.9
+[1m[92m  Downloaded[0m proc-macro-error2 v2.0.1
+[1m[92m  Downloaded[0m rand_core v0.6.4
+[1m[92m  Downloaded[0m version_check v0.9.5
+[1m[92m  Downloaded[0m autocfg v1.5.1
+[1m[92m  Downloaded[0m base64ct v1.8.3
+[1m[92m  Downloaded[0m password-hash v0.5.0
+[1m[92m  Downloaded[0m poly1305 v0.8.0
+[1m[92m  Downloaded[0m bit-vec v0.10.1
+[1m[92m  Downloaded[0m crossbeam-epoch v0.9.21
+[1m[92m  Downloaded[0m oorandom v11.1.5
+[1m[92m  Downloaded[0m rpassword v7.5.4
+[1m[92m  Downloaded[0m crossbeam-utils v0.8.23
+[1m[92m  Downloaded[0m once_cell v1.21.4
+[1m[92m  Downloaded[0m quote v1.0.47
+[1m[92m  Downloaded[0m bs58 v0.5.1
+[1m[92m  Downloaded[0m wait-timeout v0.2.1
+[1m[92m  Downloaded[0m blake2 v0.10.6
+[1m[92m  Downloaded[0m getrandom v0.2.17
+[1m[92m  Downloaded[0m rand_core v0.10.1
+[1m[92m  Downloaded[0m rusty-fork v0.3.1
+[1m[92m  Downloaded[0m universal-hash v0.5.1
+[1m[92m  Downloaded[0m getrandom v0.4.3
+[1m[92m  Downloaded[0m half v2.7.1
+[1m[92m  Downloaded[0m libcrux-sha3 v0.0.11
+[1m[92m  Downloaded[0m proc-macro2 v1.0.107
+[1m[92m  Downloaded[0m borsh-derive v1.8.1
+[1m[92m  Downloaded[0m chacha20poly1305 v0.10.1
+[1m[92m  Downloaded[0m num-traits v0.2.19
+[1m[92m  Downloaded[0m rayon-core v1.13.0
+[1m[92m  Downloaded[0m serde_derive v1.0.229
+[1m[92m  Downloaded[0m zeroize v1.9.1
+[1m[92m  Downloaded[0m zmij v1.0.23
+[1m[92m  Downloaded[0m bytes v1.12.1
+[1m[92m  Downloaded[0m clap v4.6.7
+[1m[92m  Downloaded[0m criterion v0.5.1
+[1m[92m  Downloaded[0m derive_more v2.1.1
+[1m[92m  Downloaded[0m derive_more-impl v2.1.1
+[1m[92m  Downloaded[0m iai-callgrind v0.16.1
+[1m[92m  Downloaded[0m memchr v2.8.3
+[1m[92m  Downloaded[0m rand v0.10.3
+[1m[92m  Downloaded[0m toml_datetime v1.1.3+spec-1.1.0
+[1m[92m  Downloaded[0m walkdir v2.5.0
+[1m[92m  Downloaded[0m aho-corasick v1.1.5
+[1m[92m  Downloaded[0m borsh v1.8.1
+[1m[92m  Downloaded[0m indexmap v2.14.2
+[1m[92m  Downloaded[0m itertools v0.10.5
+[1m[92m  Downloaded[0m tls_codec_derive v0.5.0
+[1m[92m  Downloaded[0m libcrux-ml-dsa v0.0.11
+[1m[92m  Downloaded[0m plotters v0.3.7
+[1m[92m  Downloaded[0m tempfile v3.27.0
+[1m[92m  Downloaded[0m toml_parser v1.1.5+spec-1.1.0
+[1m[92m  Downloaded[0m hashbrown v0.17.1
+[1m[92m  Downloaded[0m tls_codec v0.5.0
+[1m[92m  Downloaded[0m regex v1.13.1
+[1m[92m  Downloaded[0m unicode-ident v1.0.27
+[1m[92m  Downloaded[0m clap_builder v4.6.7
+[1m[92m  Downloaded[0m rayon v1.12.0
+[1m[92m  Downloaded[0m semver v1.0.28
+[1m[92m  Downloaded[0m serde_core v1.0.229
+[1m[92m  Downloaded[0m tinyvec v1.13.3
+[1m[92m  Downloaded[0m proptest v1.12.0
+[1m[92m  Downloaded[0m iai-callgrind-runner v0.16.1
+[1m[92m  Downloaded[0m regex-syntax v0.8.11
+[1m[92m  Downloaded[0m rustix v1.1.6
+[1m[92m  Downloaded[0m toml_edit v0.25.19+spec-1.1.0
+[1m[92m  Downloaded[0m serde v1.0.229
+[1m[92m  Downloaded[0m typenum v1.20.1
+[1m[92m  Downloaded[0m regex-automata v0.4.18
+[1m[92m  Downloaded[0m libc v0.2.191
+[1m[92m  Downloaded[0m syn v3.0.9
+[1m[92m  Downloaded[0m zerocopy-derive v0.8.63
+[1m[92m  Downloaded[0m serde_json v1.0.154
+[1m[92m  Downloaded[0m winnow v1.0.5
+[1m[92m  Downloaded[0m syn v2.0.119
+[1m[92m  Downloaded[0m zerocopy v0.8.63
+[1m[92m  Downloaded[0m sha3 v0.10.9
+[1m[92m  Downloaded[0m linux-raw-sys v0.12.1
+[1m[92m   Compiling[0m libc v0.2.191
+[1m[92m   Compiling[0m proc-macro2 v1.0.107
+[1m[92m   Compiling[0m cfg-if v1.0.5
+[1m[92m   Compiling[0m unicode-ident v1.0.27
+[1m[92m   Compiling[0m quote v1.0.47
+[1m[92m   Compiling[0m version_check v0.9.5
+[1m[92m   Compiling[0m generic-array v0.14.7
+[1m[92m   Compiling[0m typenum v1.20.1
+[1m[92m   Compiling[0m rand_core v0.10.1
+[1m[92m   Compiling[0m getrandom v0.4.3
+[1m[92m   Compiling[0m subtle v2.6.1
+[1m[92m   Compiling[0m serde_core v1.0.229
+[1m[92m   Compiling[0m syn v3.0.9
+[1m[92m   Compiling[0m syn v2.0.119
+[1m[92m   Compiling[0m cpufeatures v0.3.1
+[1m[92m   Compiling[0m once_cell v1.21.4
+[1m[92m   Compiling[0m getrandom v0.2.17
+[1m[92m   Compiling[0m rand_core v0.6.4
+[1m[92m   Compiling[0m chacha20 v0.10.2
+[1m[92m   Compiling[0m crypto-common v0.1.7
+[1m[92m   Compiling[0m equivalent v1.0.3
+[1m[92m   Compiling[0m serde v1.0.229
+[1m[92m   Compiling[0m hashbrown v0.17.1
+[1m[92m   Compiling[0m zmij v1.0.23
+[1m[92m   Compiling[0m winnow v1.0.5
+[1m[92m   Compiling[0m toml_parser v1.1.5+spec-1.1.0
+[1m[92m   Compiling[0m serde_derive v1.0.229
+[1m[92m   Compiling[0m indexmap v2.14.2
+[1m[92m   Compiling[0m rand v0.10.3
+[1m[92m   Compiling[0m block-buffer v0.10.4
+[1m[92m   Compiling[0m libcrux-intrinsics v0.0.9
+[1m[92m   Compiling[0m toml_datetime v1.1.3+spec-1.1.0
+[1m[92m   Compiling[0m cpufeatures v0.2.17
+[1m[92m   Compiling[0m serde_json v1.0.154
+[1m[92m   Compiling[0m digest v0.10.7
+[1m[92m   Compiling[0m toml_edit v0.25.19+spec-1.1.0
+[1m[92m   Compiling[0m inout v0.1.4
+[1m[92m   Compiling[0m libcrux-secrets v0.0.7
+[1m[92m   Compiling[0m zeroize v1.9.1
+[1m[92m   Compiling[0m libcrux-sha3 v0.0.11
+[1m[92m   Compiling[0m itoa v1.0.18
+[1m[92m   Compiling[0m memchr v2.8.3
+[1m[92m   Compiling[0m cfg_aliases v0.2.2
+[1m[92m   Compiling[0m crossbeam-utils v0.8.23
+[1m[92m   Compiling[0m borsh v1.8.1
+[1m[92m   Compiling[0m cipher v0.4.4
+[1m[92m   Compiling[0m libcrux-traits v0.0.9
+[1m[92m   Compiling[0m proc-macro-crate v3.5.0
+[1m[92m   Compiling[0m universal-hash v0.5.1
+[1m[92m   Compiling[0m libcrux-platform v0.0.4
+[1m[92m   Compiling[0m opaque-debug v0.3.1
+[1m[92m   Compiling[0m libcrux-ml-dsa v0.0.11
+[1m[92m   Compiling[0m autocfg v1.5.1
+[1m[92m   Compiling[0m base64ct v1.8.3
+[1m[92m   Compiling[0m zerocopy v0.8.63
+[1m[92m   Compiling[0m crossbeam-epoch v0.9.21
+[1m[92m   Compiling[0m num-traits v0.2.19
+[1m[92m   Compiling[0m borsh-derive v1.8.1
+[1m[92m   Compiling[0m password-hash v0.5.0
+[1m[92m   Compiling[0m poly1305 v0.8.0
+[1m[92m   Compiling[0m chacha20 v0.9.1
+[1m[92m   Compiling[0m blake2 v0.10.6
+[1m[92m   Compiling[0m zerocopy-derive v0.8.63
+[1m[92m   Compiling[0m libcrux-macros v0.0.4
+[1m[92m   Compiling[0m aead v0.5.2
+[1m[92m   Compiling[0m rtoolbox v0.0.6
+[1m[92m   Compiling[0m crossbeam-deque v0.8.8
+[1m[92m   Compiling[0m keccak v0.1.6
+[1m[92m   Compiling[0m rustix v1.1.6
+[1m[92m   Compiling[0m sha3 v0.10.9
+[1m[92m   Compiling[0m rpassword v7.5.4
+[1m[92m   Compiling[0m chacha20poly1305 v0.10.1
+[1m[92m   Compiling[0m argon2 v0.5.3
+[1m[92m   Compiling[0m linux-raw-sys v0.12.1
+[1m[92m   Compiling[0m bitflags v2.13.2
+[1m[92m   Compiling[0m either v1.19.0
+[1m[92m   Compiling[0m bs58 v0.5.1
+[1m[92m   Compiling[0m rayon-core v1.13.0
+[1m[92m   Compiling[0m regex-syntax v0.8.11
+[1m[92m   Compiling[0m plotters-backend v0.3.7
+[1m[92m   Compiling[0m fastrand v2.5.0
+[1m[92m   Compiling[0m ciborium-io v0.2.2
+[1m[92m   Compiling[0m clap_lex v1.1.1
+[1m[92m   Compiling[0m anstyle v1.0.14
+[1m[92m   Compiling[0m half v2.7.1
+[1m[92m   Compiling[0m clap_builder v4.6.7
+[1m[92m   Compiling[0m tempfile v3.27.0
+[1m[92m   Compiling[0m ciborium-ll v0.2.2
+[1m[92m   Compiling[0m plotters-svg v0.3.7
+[1m[92m   Compiling[0m regex-automata v0.4.18
+[1m[92m   Compiling[0m token-postquantum v0.13.0 (/home/runner/work/Amalgam21-A21/Amalgam21-A21/core)
+[1m[92m   Compiling[0m itertools v0.10.5
+[1m[92m   Compiling[0m derive_more-impl v2.1.1
+[1m[92m   Compiling[0m wait-timeout v0.2.1
+[1m[92m   Compiling[0m quick-error v1.2.3
+[1m[92m   Compiling[0m fnv v1.0.7
+[1m[92m   Compiling[0m same-file v1.0.6
+[1m[92m   Compiling[0m cast v0.3.0
+[1m[92m   Compiling[0m bit-vec v0.10.1
+[1m[92m   Compiling[0m walkdir v2.5.0
+[1m[92m   Compiling[0m bit-set v0.11.1
+[1m[92m   Compiling[0m criterion-plot v0.5.0
+[1m[92m   Compiling[0m rusty-fork v0.3.1
+[1m[92m   Compiling[0m regex v1.13.1
+[1m[92m   Compiling[0m clap v4.6.7
+[1m[92m   Compiling[0m rayon v1.12.0
+[1m[92m   Compiling[0m plotters v0.3.7
+[1m[92m   Compiling[0m ciborium v0.2.2
+[1m[92m   Compiling[0m tinytemplate v1.2.1
+[1m[92m   Compiling[0m is-terminal v0.4.17
+[1m[92m   Compiling[0m proc-macro-error-attr2 v2.0.0
+[1m[92m   Compiling[0m rand_xorshift v0.5.0
+[1m[92m   Compiling[0m oorandom v11.1.5
+[1m[92m   Compiling[0m core_detect v1.0.0
+[1m[92m   Compiling[0m unarray v0.1.4
+[1m[92m   Compiling[0m anes v0.1.6
+[1m[92m   Compiling[0m iai-callgrind-runner v0.16.1
+[1m[92m   Compiling[0m proptest v1.12.0
+[1m[92m   Compiling[0m proc-macro-error2 v2.0.1
+[1m[92m   Compiling[0m derive_more v2.1.1
+[1m[92m   Compiling[0m iai-callgrind v0.16.1
+[1m[92m   Compiling[0m criterion v0.5.1
+[1m[92m   Compiling[0m iai-callgrind-macros v0.6.1
+[1m[92m   Compiling[0m bincode v1.3.3
+[1m[92m   Compiling[0m token-postquantum-export v0.13.0 (/home/runner/work/Amalgam21-A21/Amalgam21-A21/export)
+[1m[92m   Compiling[0m amg21-stress v0.12.0 (/home/runner/work/Amalgam21-A21/Amalgam21-A21/stress)
+[1m[92m    Finished[0m `test` profile [unoptimized + debuginfo] target(s) in 22.69s
+[1m[33mwarning[0m: the following packages contain code that will be rejected by a future version of Rust: proc-macro-error2 v2.0.1
+[1m[92mnote[0m: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+────────────
+[32;1m Nextest run[0m ID [1ma29f344c-2daa-480d-b402-effc10849de3[0m with nextest profile: [1mdefault[0m
+[32;1m    Starting[0m [1m45[0m tests across [1m8[0m binaries
+[32;1m        PASS[0m [   0.018s] ( 1/45) [35;1mtoken-postquantum[0m [36mtests[0m[36m::[0m[34;1maddress_encoding_roundtrip_and_checksum[0m
+[31;1m        FAIL[0m [   0.068s] ( 2/45) [35;1mtoken-postquantum[0m [36mtests[0m[36m::[0m[34;1mapply_block_rollback_restores_state_byte_identical[0m
+[31;1m [0m [31;1mstdout[0m [31;1m───[0m
+
+    running 1 test
+    test tests::apply_block_rollback_restores_state_byte_identical ... FAILED
+
+    failures:
+
+    failures:
+        tests::apply_block_rollback_restores_state_byte_identical
+
+    test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 26 filtered out; finished in 0.06s
+    [0m
+[31;1m [0m [31;1mstderr[0m [31;1m───[0m
+
+    [0m[31;1mthread 'tests::apply_block_rollback_restores_state_byte_identical' (4194) panicked at core/src/tests.rs:741:86:[0m
+    [31;1mcalled `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidInput, error: "creating or truncating a file requires write or append access" })[0m
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace[0m
+
+[31;1m  Cancelling[0m due to [31;1mtest failure[0m: [1m3[0m tests still running
+[31;1m        FAIL[0m [   0.082s] ( 3/45) [35;1mtoken-postquantum[0m [36mtests[0m[36m::[0m[34;1mairdrop_first_wallets_then_cap[0m
+[31;1m [0m [31;1mstdout[0m [31;1m───[0m
+
+    running 1 test
+    test tests::airdrop_first_wallets_then_cap ... FAILED
+
+    failures:
+
+    failures:
+        tests::airdrop_first_wallets_then_cap
+
+    test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 26 filtered out; finished in 0.08s
+    [0m
+[31;1m [0m [31;1mstderr[0m [31;1m───[0m
+
+    [0m[31;1mthread 'tests::airdrop_first_wallets_then_cap' (4191) panicked at core/src/tests.rs:289:86:[0m
+    [31;1mcalled `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidInput, error: "creating or truncating a file requires write or append access" })[0m
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace[0m
+
+[31;1m        FAIL[0m [   0.083s] ( 4/45) [35;1mtoken-postquantum[0m [36mtests[0m[36m::[0m[34;1mcheckpoint_rotation_and_reopen[0m
+[31;1m [0m [31;1mstdout[0m [31;1m───[0m
+
+    running 1 test
+    test tests::checkpoint_rotation_and_reopen ... FAILED
+
+    failures:
+
+    failures:
+        tests::checkpoint_rotation_and_reopen
+
+    test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 26 filtered out; finished in 0.08s
+    [0m
+[31;1m [0m [31;1mstderr[0m [31;1m───[0m
+
+    [0m[31;1mthread 'tests::checkpoint_rotation_and_reopen' (4192) panicked at core/src/tests.rs:778:90:[0m
+    [31;1mcalled `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidInput, error: "creating or truncating a file requires write or append access" })[0m
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace[0m
+
+[31;1m        FAIL[0m [   0.067s] ( 5/45) [35;1mtoken-postquantum[0m [36mtests[0m[36m::[0m[34;1mcheckpoint_tampered_rejected[0m
+[31;1m [0m [31;1mstdout[0m [31;1m───[0m
+
+    running 1 test
+    test tests::checkpoint_tampered_rejected ... FAILED
+
+    failures:
+
+    failures:
+        tests::checkpoint_tampered_rejected
+
+    test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 26 filtered out; finished in 0.06s
+    [0m
+[31;1m [0m [31;1mstderr[0m [31;1m───[0m
+
+    [0m[31;1mthread 'tests::checkpoint_tampered_rejected' (4196) panicked at core/src/tests.rs:868:90:[0m
+    [31;1mcalled `Result::unwrap()` on an `Err` value: Io(Custom { kind: InvalidInput, error: "creating or truncating a file requires write or append access" })[0m
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace[0m
+
+────────────
+[31;1m     Summary[0m [   0.086s] [1m5[0m/[1m45[0m tests run: [1m1[0m [32;1mpassed[0m, [1m4[0m [31;1mfailed[0m, [1m0[0m [33;1mskipped[0m
+[31;1m        FAIL[0m [   0.068s] ( 2/45) [35;1mtoken-postquantum[0m [36mtests[0m[36m::[0m[34;1mapply_block_rollback_restores_state_byte_identical[0m
+[31;1m        FAIL[0m [   0.082s] ( 3/45) [35;1mtoken-postquantum[0m [36mtests[0m[36m::[0m[34;1mairdrop_first_wallets_then_cap[0m
+[31;1m        FAIL[0m [   0.083s] ( 4/45) [35;1mtoken-postquantum[0m [36mtests[0m[36m::[0m[34;1mcheckpoint_rotation_and_reopen[0m
+[31;1m        FAIL[0m [   0.067s] ( 5/45) [35;1mtoken-postquantum[0m [36mtests[0m[36m::[0m[34;1mcheckpoint_tampered_rejected[0m
+[33;1mwarning[0m: [1m40[0m/[1m45[0m tests were not run due to [33;1mtest failure[0m (run with [1m--no-fail-fast[0m to run all tests, or run with [1m--max-fail[0m)
+[31;1merror[0m: test run failed
