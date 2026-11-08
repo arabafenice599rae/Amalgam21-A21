@@ -76,7 +76,7 @@ jobs:
           } > "diag/clippy.log"
           git add diag
           git commit -m "diag: clippy @ ${{ github.sha }} [skip ci]"
-          git push origin "$BRANCH"
+          git push --force origin "$BRANCH"
 
   build-test:
     name: build e test
@@ -113,7 +113,7 @@ jobs:
           } > "diag/build-test.log"
           git add diag
           git commit -m "diag: build-test @ ${{ github.sha }} [skip ci]"
-          git push origin "$BRANCH"
+          git push --force origin "$BRANCH"
 
   audit:
     name: cargo-audit
