@@ -6,11 +6,8 @@
 // ============================================================================
 
 use criterion::{criterion_group, criterion_main, Criterion};
-use std::path::PathBuf;
 use token_postquantum::{GenesisParams, Ledger, SignedTransaction, Wallet};
-use token_postquantum_export::{
-    block_index, state_snapshot, verify_block_index, verify_state_snapshot,
-};
+use token_postquantum_export::{block_index, state_snapshot, verify_block_index, verify_state_snapshot};
 
 fn seed(i: u64) -> [u8; 32] {
     let mut s = [0u8; 32];
@@ -35,8 +32,7 @@ fn params() -> GenesisParams {
 }
 
 pub fn bench_export(c: &mut Criterion) {
-    let base = PathBuf::from(std::env::temp_dir())
-        .join(format!("amg21-bench-export-{}", std::process::id()));
+    let base = std::env::temp_dir().join(format!("amg21-bench-export-{}", std::process::id()));
     let data = base.join("data");
     let ext = base.join("ext");
     std::fs::create_dir_all(&data).unwrap();

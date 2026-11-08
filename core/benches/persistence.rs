@@ -6,8 +6,7 @@
 //     cargo bench -p token-postquantum --bench persistence
 // ============================================================================
 
-use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
-use std::path::PathBuf;
+use criterion::{BatchSize, criterion_group, criterion_main, Criterion};
 use token_postquantum::{GenesisParams, Ledger, SignedTransaction, Wallet};
 
 fn seed(i: u64) -> [u8; 32] {
@@ -42,9 +41,7 @@ pub fn bench_reopen(c: &mut Criterion) {
                 counter += 1;
                 let base = std::env::temp_dir().join(format!(
                     "amg21-bench-reopen-{}-{}-{}",
-                    run_id,
-                    counter,
-                    std::process::id()
+                    run_id, counter, std::process::id()
                 ));
                 let data = base.join("data");
                 let ext = base.join("ext");
@@ -53,7 +50,8 @@ pub fn bench_reopen(c: &mut Criterion) {
                 let node = Wallet::from_seed(seed(9_001));
                 let creator = Wallet::from_seed(seed(9_002));
                 let alice = Wallet::from_seed(seed(9_003));
-                let mut l = Ledger::open(&data, &ext, bench_params(), &node, &creator).unwrap();
+                let mut l =
+                    Ledger::open(&data, &ext, bench_params(), &node, &creator).unwrap();
                 let chain = l.state.genesis.genesis_hash;
                 l.submit(&node, vec![SignedTransaction::claim(&alice, chain, 0)])
                     .unwrap();
@@ -77,7 +75,7 @@ pub fn bench_reopen(c: &mut Criterion) {
                 let l = Ledger::open(&data, &ext, bench_params(), &node, &creator).unwrap();
                 assert_eq!(l.state.height, 25);
                 drop(l);
-                let _ = std::fs::remove_dir_all(&data.parent().unwrap());
+                let _ = std::fs::remove_dir_all(data.parent().unwrap());
             },
             BatchSize::PerIteration,
         )
