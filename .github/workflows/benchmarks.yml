@@ -21,10 +21,33 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - name: Benchmark
         run: |
-          cargo bench --workspace -- --warm-up-time 1 --measurement-time 5
+          cargo bench -p token-postquantum --bench ledger --bench signatures --bench persistence -- --warm-up-time 1 --measurement-time 5
+          cargo bench -p token-postquantum-export --bench export -- --warm-up-time 1 --measurement-time 5
       - name: Pubblica report
         uses: actions/upload-artifact@v4
         with:
           name: criterion-report
           path: target/criterion/
+          retention-days: 30
+
+  iai-callgrind:
+    name: iai-callgrind (istruzioni esatte)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Installazione Valgrind
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y valgrind
+      - name: Benchmark istruzioni
+        run: |
+          cargo bench -p token-postquantum --bench iai_signatures --bench iai_persistence
+      - name: Pubblica report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iai-report
+          path: target/iai/
           retention-days: 30
