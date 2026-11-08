@@ -14,14 +14,14 @@
   <rect width="240" height="240" rx="36" fill="#0B1220"/>
   <rect width="240" height="240" rx="36" fill="url(#glow)"/>
 
-  <!-- outer hexagon -->
+  <!-- esagono esterno -->
   <polygon points="120,18 210.1,70 210.1,170 120,222 29.9,170 29.9,70"
            fill="none" stroke="url(#a21)" stroke-width="6" stroke-linejoin="round"/>
-  <!-- inner hexagon -->
+  <!-- esagono interno -->
   <polygon points="120,34 196.2,78 196.2,162 120,206 43.8,162 43.8,78"
            fill="none" stroke="url(#a21)" stroke-width="1.5" opacity="0.35"/>
 
-  <!-- ledger lattice: nodes on hexagon vertices linked to the core -->
+  <!-- reticolo del ledger: nodi sui vertici collegati al nucleo -->
   <g stroke="#22D3EE" stroke-width="1.2" opacity="0.45">
     <line x1="120" y1="18"  x2="120" y2="120"/>
     <line x1="210.1" y1="70"  x2="120" y2="120"/>
@@ -39,7 +39,7 @@
     <circle cx="29.9" cy="70"  r="4.5"/>
   </g>
 
-  <!-- core -->
+  <!-- nucleo -->
   <text x="120" y="136" text-anchor="middle" font-family="Segoe UI, Helvetica, Arial, sans-serif"
         font-size="58" font-weight="700" letter-spacing="2" fill="url(#a21)">A21</text>
   <text x="120" y="172" text-anchor="middle" font-family="Segoe UI, Helvetica, Arial, sans-serif"
