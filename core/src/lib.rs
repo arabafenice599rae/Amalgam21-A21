@@ -2814,15 +2814,11 @@ mod tests {
         //    inizio blocco), il Claim registra la vk e il Transfer passa
         //    senza che nessuna firma sia mai stata verificata.
         let claim = SignedTransaction::claim(&alice, chain, 0);
-        let mut forged =
-            SignedTransaction::transfer(&alice, chain, 1, f.creator.address, 50);
+        let mut forged = SignedTransaction::transfer(&alice, chain, 1, f.creator.address, 50);
         forged.signature = vec![0u8; SIG_SIZE];
         match l.submit(&f.node, vec![claim, forged]) {
             Err(LedgerError::InvalidSignature) => {}
-            other => panic!(
-                "attesa InvalidSignature, ottenuto {:?}",
-                other.map(|_| ())
-            ),
+            other => panic!("attesa InvalidSignature, ottenuto {:?}", other.map(|_| ())),
         }
         // 3. Il blocco è scartato per intero: lo stato resta byte-identico
         //    (undo log) e nessun fondo è movimentato.
@@ -2840,8 +2836,7 @@ mod tests {
         assert_eq!(l.state.nonce(&alice.address), 2);
         assert_eq!(
             l.state.balance(&alice.address),
-            100 + f.params.airdrop_per_wallet - 50 - f.params.fee
-                + f.params.cashback_of_fee()
+            100 + f.params.airdrop_per_wallet - 50 - f.params.fee + f.params.cashback_of_fee()
         );
     }
 
