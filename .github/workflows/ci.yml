@@ -77,8 +77,8 @@ jobs:
           TITLE="CI diagnostica compilazione"
           NUM=$(gh api "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq ".[] | select(.title==\"\$TITLE\") | select(.pull_request==null) | .number" | head -n1)
           if [ -z "$NUM" ]; then
-            gh issue create --title "$TITLE" --body "Issue tecnica aperta dalla CI: raccoglie errori di compilazione e lint per la correzione." > /dev/null
-            NUM=$(gh api "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq ".[] | select(.title==\"\$TITLE\") | select(.pull_request==null) | .number" | head -n1)
+            URL=$(gh issue create --title "$TITLE" --body "Issue tecnica aperta dalla CI: raccoglie errori di compilazione e lint per la correzione.")
+            NUM="${URL##*/}"
           fi
           gh issue comment "$NUM" --body-file body.md
 
@@ -117,8 +117,8 @@ jobs:
           TITLE="CI diagnostica compilazione"
           NUM=$(gh api "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq ".[] | select(.title==\"\$TITLE\") | select(.pull_request==null) | .number" | head -n1)
           if [ -z "$NUM" ]; then
-            gh issue create --title "$TITLE" --body "Issue tecnica aperta dalla CI: raccoglie errori di compilazione e lint per la correzione." > /dev/null
-            NUM=$(gh api "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq ".[] | select(.title==\"\$TITLE\") | select(.pull_request==null) | .number" | head -n1)
+            URL=$(gh issue create --title "$TITLE" --body "Issue tecnica aperta dalla CI: raccoglie errori di compilazione e lint per la correzione.")
+            NUM="${URL##*/}"
           fi
           gh issue comment "$NUM" --body-file body.md
 
