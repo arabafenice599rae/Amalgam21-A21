@@ -11,7 +11,6 @@
 
 use proptest::prelude::*;
 use std::collections::HashMap;
-use std::path::PathBuf;
 use token_postquantum::{GenesisParams, Ledger, SignedTransaction, Wallet};
 
 fn seed(i: u64) -> [u8; 32] {
