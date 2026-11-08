@@ -24,9 +24,7 @@
 
   <!-- reticolo pentagonale -->
   <g stroke="url(#nodeline)" stroke-width="1.4" opacity="0.85" fill="none">
-    <!-- perimetro pentagonale -->
     <polygon points="120,26 200.4,84.2 169.8,178.3 70.2,178.3 39.6,84.2"/>
-    <!-- connessioni interne -->
     <line x1="120" y1="26"  x2="120" y2="120"/>
     <line x1="120" y1="26"  x2="70.2" y2="178.3"/>
     <line x1="200.4" y1="84.2"  x2="120" y2="120"/>
