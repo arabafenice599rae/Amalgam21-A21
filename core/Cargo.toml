@@ -8,7 +8,7 @@ publish = false
 [dependencies]
 sha3 = "0.10"              # RustCrypto SHA-3/SHAKE256 (auditato)
 libcrux-ml-dsa = "0.0.11"  # ML-DSA-65, FIPS 204 (Cryspen); pin patchato per RUSTSEC-2026-0077
-borsh = "1"                # serializzazione canonica deterministica (auditata)
+borsh = { version = "1", features = ["derive"] }  # derive: macro BorshSerialize/BorshDeserialize (non default in borsh 1.x)
 bs58 = "0.5"               # base58; nessun audit formale noto
 rand = "0.10"              # sola entropia OS (TryRngCore)
 chacha20poly1305 = "0.10"  # AEAD XChaCha20-Poly1305 (RustCrypto, auditato)

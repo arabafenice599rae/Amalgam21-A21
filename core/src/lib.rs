@@ -1106,7 +1106,7 @@ impl std::fmt::Display for LedgerError {
 // ---------------------------------------------------------------------------
 // Stato: applicazione IN PLACE con undo log (v0.12) e invariante incrementale
 // ---------------------------------------------------------------------------
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Account {
     pub balance: u64,
     pub nonce: u64,
@@ -1322,7 +1322,7 @@ impl LedgerState {
         let mut undo: Vec<(Address, Option<Account>)> = Vec::new();
         let old_total = self.accounts_total;
 
-        let apply = |state: &mut LedgerState| -> Result<(), LedgerError> {
+        let mut apply = |state: &mut LedgerState| -> Result<(), LedgerError> {
             for tx in &h.txs {
                 if tx.core.chain != state.genesis.genesis_hash {
                     return Err(LedgerError::ChainMismatch);

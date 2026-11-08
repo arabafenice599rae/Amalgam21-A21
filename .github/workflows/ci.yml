@@ -72,7 +72,7 @@ jobs:
             echo "job: ${{ github.job }}"
             echo "run: ${{ github.run_id }}"
             echo
-            tail -n 200 diag.log
+            cat diag.log
           } > "diag/clippy.log"
           git add diag
           git commit -m "diag: clippy @ ${{ github.sha }} [skip ci]"
@@ -109,7 +109,7 @@ jobs:
             echo "job: ${{ github.job }}"
             echo "run: ${{ github.run_id }}"
             echo
-            tail -n 200 diag.log 2>/dev/null; echo ----; tail -n 100 diag-test.log 2>/dev/null
+            cat diag.log 2>/dev/null; echo ----; cat diag-test.log 2>/dev/null
           } > "diag/build-test.log"
           git add diag
           git commit -m "diag: build-test @ ${{ github.sha }} [skip ci]"
